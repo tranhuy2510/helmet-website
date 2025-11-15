@@ -1,0 +1,94 @@
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper">
+  <!-- Content Header (Page header) -->
+  <div class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1 class="m-0">Quản lý đơn hàng</h1>
+        </div>
+        <div class="col-sm-6">
+          <ol class="breadcrumb float-sm-right">
+            <li class="breadcrumb-item"><a href="/admin">Home</a></li>
+            <li class="breadcrumb-item active">Đơn hàng</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <section class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Danh sách đơn hàng</h3>
+            </div>
+            <div class="card-body">
+              <table id="ordersTable" class="table table-bordered table-hover">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Khách hàng</th>
+                    <th>Ngày đặt</th>
+                    <th>Tổng tiền</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% orders.forEach(function(order) { %>
+                  <tr>
+                    <td><%= order.idOrder %></td>
+                    <td><%= order.ho %> <%= order.ten %> (<%= order.username %>)</td>
+                    <td><%= new Date(order.createdAt).toLocaleDateString('vi-VN') %></td>
+                    <td><%= new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.totalAmount) %></td>
+                    <td>
+                      <% if (order.status === 'pending') { %>
+                        <span class="badge badge-warning">Đang xử lý</span>
+                      <% } else if (order.status === 'confirmed') { %>
+                        <span class="badge badge-info">Đã xác nhận</span>
+                      <% } else if (order.status === 'shipped') { %>
+                        <span class="badge badge-primary">Đang giao</span>
+                      <% } else if (order.status === 'delivered') { %>
+                        <span class="badge badge-success">Đã giao</span>
+                      <% } else if (order.status === 'cancelled') { %>
+                        <span class="badge badge-danger">Đã hủy</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <a href="/admin/orders/<%= order.idOrder %>" class="btn btn-info btn-sm">
+                        <i class="fas fa-eye"></i> Chi tiết
+                      </a>
+                      <form method="post" action="/admin/orders/update-status/<%= order.idOrder %>" style="display: inline;">
+                        <select name="status" class="form-control form-control-sm d-inline" style="width: auto;" onchange="this.form.submit()">
+                          <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Đang xử lý</option>
+                          <option value="confirmed" <%= order.status === 'confirmed' ? 'selected' : '' %>>Đã xác nhận</option>
+                          <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>Đang giao</option>
+                          <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Đã giao</option>
+                          <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>Đã hủy</option>
+                        </select>
+                      </form>
+                    </td>
+                  </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  $(function () {
+    $("#ordersTable").DataTable({
+      "responsive": true, "lengthChange": false, "autoWidth": false,
+      "order": [[ 0, "desc" ]]
+    });
+  });
+</script>
