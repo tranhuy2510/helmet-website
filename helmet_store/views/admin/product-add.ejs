@@ -29,7 +29,11 @@
             <div class="card-header">
               <h3 class="card-title">Thông tin sản phẩm</h3>
             </div>
-            <form method="post" action="/admin/products/add">
+            <form
+              method="post"
+              action="/admin/products/add"
+              enctype="multipart/form-data"
+            >
               <div class="card-body">
                 <div class="form-group">
                   <label for="nameProduct">Tên sản phẩm</label>
@@ -65,14 +69,17 @@
                   </select>
                 </div>
                 <div class="form-group">
-                  <label for="imgProduct">URL hình ảnh</label>
+                  <label for="imgProduct">Hình ảnh sản phẩm</label>
                   <input
-                    type="url"
+                    type="file"
                     class="form-control"
                     id="imgProduct"
                     name="imgProduct"
-                    placeholder="Nhập URL hình ảnh"
+                    accept="image/*"
                   />
+                  <small class="form-text text-muted"
+                    >Chọn file hình ảnh (JPG, PNG, GIF). Tối đa 5MB.</small
+                  >
                 </div>
                 <div class="form-group">
                   <label for="desProduct">Mô tả</label>

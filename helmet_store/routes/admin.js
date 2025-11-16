@@ -4,6 +4,43 @@ var db = require("../models/database");
 var { isAdmin } = require("../middleware/auth");
 var ejs = require("ejs");
 var path = require("path");
+var multer = require("multer");
+var fs = require("fs");
+
+// Cấu hình multer để upload ảnh
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadPath = path.join(__dirname, "../public/img");
+    // Tạo thư mục nếu chưa tồn tại
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: function (req, file, cb) {
+    // Tạo tên file unique với timestamp
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(
+      null,
+      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
+    );
+  },
+});
+
+const upload = multer({
+  storage: storage,
+  fileFilter: function (req, file, cb) {
+    // Chỉ cho phép upload ảnh
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Chỉ được upload file ảnh!"), false);
+    }
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024, // Giới hạn 5MB
+  },
+});
 
 // Helper function để render admin views với layout
 function renderWithLayout(res, viewPath, data = {}) {
@@ -99,19 +136,25 @@ router.get("/products/add", function (req, res, next) {
   });
 });
 
-router.post("/products/add", function (req, res, next) {
-  let { nameProduct, priceProduct, desProduct, idCat, imgProduct } = req.body;
-  let sql =
-    "INSERT INTO product (nameProduct, priceProduct, desProduct, idCat, imgProduct) VALUES (?, ?, ?, ?, ?)";
-  db.query(
-    sql,
-    [nameProduct, priceProduct, desProduct, idCat, imgProduct],
-    (err, result) => {
-      if (err) throw err;
-      res.redirect("/admin/products");
-    }
-  );
-});
+router.post(
+  "/products/add",
+  upload.single("imgProduct"),
+  function (req, res, next) {
+    let { nameProduct, priceProduct, desProduct, idCat } = req.body;
+    let imgProduct = req.file ? `img/${req.file.filename}` : null;
+
+    let sql =
+      "INSERT INTO product (nameProduct, priceProduct, desProduct, idCat, imgProduct) VALUES (?, ?, ?, ?, ?)";
+    db.query(
+      sql,
+      [nameProduct, priceProduct, desProduct, idCat, imgProduct],
+      (err, result) => {
+        if (err) throw err;
+        res.redirect("/admin/products");
+      }
+    );
+  }
+);
 
 // Sửa sản phẩm
 router.get("/products/edit/:id", function (req, res, next) {
@@ -133,26 +176,47 @@ router.get("/products/edit/:id", function (req, res, next) {
   );
 });
 
-router.post("/products/edit/:id", function (req, res, next) {
-  let productId = req.params.id;
-  let { nameProduct, priceProduct, desProduct, idCat, imgProduct } = req.body;
-  let sql =
-    "UPDATE product SET nameProduct = ?, priceProduct = ?, desProduct = ?, idCat = ?, imgProduct = ? WHERE idProduct = ?";
-  db.query(
-    sql,
-    [nameProduct, priceProduct, desProduct, idCat, imgProduct, productId],
-    (err, result) => {
-      if (err) throw err;
-      res.redirect("/admin/products");
+router.post(
+  "/products/edit/:id",
+  upload.single("imgProduct"),
+  function (req, res, next) {
+    let productId = req.params.id;
+    let { nameProduct, priceProduct, desProduct, idCat } = req.body;
+
+    // Nếu có file mới được upload
+    if (req.file) {
+      let imgProduct = `img/${req.file.filename}`;
+      let sql =
+        "UPDATE product SET nameProduct = ?, priceProduct = ?, desProduct = ?, idCat = ?, imgProduct = ? WHERE idProduct = ?";
+      db.query(
+        sql,
+        [nameProduct, priceProduct, desProduct, idCat, imgProduct, productId],
+        (err, result) => {
+          if (err) throw err;
+          res.redirect("/admin/products");
+        }
+      );
+    } else {
+      // Không có file mới, chỉ update các field khác
+      let sql =
+        "UPDATE product SET nameProduct = ?, priceProduct = ?, desProduct = ?, idCat = ? WHERE idProduct = ?";
+      db.query(
+        sql,
+        [nameProduct, priceProduct, desProduct, idCat, productId],
+        (err, result) => {
+          if (err) throw err;
+          res.redirect("/admin/products");
+        }
+      );
     }
-  );
-});
+  }
+);
 
 // Xóa sản phẩm
 router.post("/products/delete/:id", function (req, res, next) {
   let productId = req.params.id;
   db.query(
-    "DELETE FROM product WHERE product_id = ?",
+    "DELETE FROM product WHERE idProduct = ?",
     [productId],
     (err, result) => {
       if (err) throw err;
