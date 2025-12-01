@@ -65,7 +65,7 @@ INSERT INTO `catalog` (`idCat`, `nameCat`) VALUES
 (2, 'Shoei'),
 (3, 'Arai'),
 (4, 'TORC'),
-(5, 'Yohe'),
+ (5, 'Yohe'),
 (6, 'Kyt'),
 (7, 'Royal'),
 (8, 'LS2');
@@ -111,8 +111,15 @@ CREATE TABLE `orders` (
   `totalAmount` decimal(10,2) NOT NULL,
   `status` varchar(20) DEFAULT 'pending',
   `shippingAddress` text NOT NULL,
-  `paymentMethod` varchar(50) NOT NULL,
-  `createdAt` timestamp NOT NULL DEFAULT current_timestamp()
+  `customerName` varchar(100) NOT NULL,
+  `customerPhone` varchar(20) NOT NULL,
+  `paymentMethod` varchar(50) NOT NULL DEFAULT 'COD',
+  `paymentStatus` varchar(20) DEFAULT 'unpaid',
+  `orderNotes` text,
+  `estimatedDelivery` datetime,
+  `deliveredAt` datetime,
+  `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -202,6 +209,27 @@ INSERT INTO `user` (`idUser`, `ho`, `ten`, `email`, `username`, `password`, `rol
 -- --------------------------------------------------------
 
 --
+-- Cấu trúc bảng cho bảng `user_addresses`
+--
+
+CREATE TABLE `user_addresses` (
+  `idAddress` int(11) NOT NULL,
+  `idUser` int(11) NOT NULL,
+  `fullName` varchar(100) NOT NULL,
+  `phone` varchar(15) NOT NULL,
+  `province` varchar(50) NOT NULL,
+  `district` varchar(50) NOT NULL,
+  `ward` varchar(50) NOT NULL,
+  `detailAddress` text NOT NULL,
+  `addressType` enum('home','office','other') DEFAULT 'home',
+  `isDefault` tinyint(1) DEFAULT 0,
+  `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Cấu trúc bảng cho bảng `wishlist`
 --
 
@@ -273,6 +301,13 @@ ALTER TABLE `user`
   ADD PRIMARY KEY (`idUser`);
 
 --
+-- Chỉ mục cho bảng `user_addresses`
+--
+ALTER TABLE `user_addresses`
+  ADD PRIMARY KEY (`idAddress`),
+  ADD KEY `idUser` (`idUser`);
+
+--
 -- Chỉ mục cho bảng `wishlist`
 --
 ALTER TABLE `wishlist`
@@ -327,6 +362,12 @@ ALTER TABLE `user`
   MODIFY `idUser` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
+-- AUTO_INCREMENT cho bảng `user_addresses`
+--
+ALTER TABLE `user_addresses`
+  MODIFY `idAddress` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT cho bảng `wishlist`
 --
 ALTER TABLE `wishlist`
@@ -367,6 +408,12 @@ ALTER TABLE `order_items`
 --
 ALTER TABLE `product`
   ADD CONSTRAINT `product_ibfk_1` FOREIGN KEY (`idCat`) REFERENCES `catalog` (`idCat`);
+
+--
+-- Các ràng buộc cho bảng `user_addresses`
+--
+ALTER TABLE `user_addresses`
+  ADD CONSTRAINT `user_addresses_ibfk_1` FOREIGN KEY (`idUser`) REFERENCES `user` (`idUser`) ON DELETE CASCADE;
 
 --
 -- Các ràng buộc cho bảng `wishlist`
