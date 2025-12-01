@@ -22,10 +22,17 @@ router.get("/", async function (req, res, next) {
       wishlistCount = wishlistItems.length;
     }
 
+    // Lấy danh sách sản phẩm yêu thích của user nếu đã đăng nhập
+    let userWishlistIds = [];
+    if (req.session.User) {
+      userWishlistIds = await modelWishlist.getUserWishlistIds(req.session.User.id);
+    }
+
     res.render("site/wishlist", {
       wishlistItems: wishlistItems,
       wishlistCount: wishlistCount,
       user: req.session.User || null,
+      userWishlistIds: userWishlistIds,
     });
   } catch (error) {
     console.error("Wishlist page error:", error);
