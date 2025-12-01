@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="utf-8" />
     <title>Helmet Store</title>
@@ -67,10 +67,10 @@
             id="navbarCollapse"
           >
             <div class="navbar-nav mr-auto">
-              <a href="/" class="nav-item nav-link active">Trang Chủ</a>
+              <a href="/" class="nav-item nav-link">Trang Chủ</a>
               <a href="/san-pham" class="nav-item nav-link">Sản Phẩm</a>
               <!-- <a href="product-detail.html" class="nav-item nav-link">Product Detail</a> -->
-              <a href="/cart" class="nav-item nav-link">Giỏ Hàng</a>
+              <a href="/cart" class="nav-item nav-link active">Giỏ Hàng</a>
               <a href="/thanh-toan" class="nav-item nav-link">Thanh Toán</a>
               <a href="/users/tai-khoan" class="nav-item nav-link"
                 >Tài khoản của bạn</a
@@ -183,6 +183,13 @@
                 <table class="table table-bordered">
                   <thead class="thead-dark">
                     <tr>
+                      <th>
+                        <input
+                          type="checkbox"
+                          id="selectAll"
+                          onchange="selectAllItems()"
+                        />
+                      </th>
                       <th>Tên sản phẩm</th>
                       <th>Giá</th>
                       <th>Số lượng</th>
@@ -194,6 +201,17 @@
                     <% if (cartItems && cartItems.length > 0) { %> <% for (let
                     item of cartItems) { %>
                     <tr>
+                      <td>
+                        <input
+                          type="checkbox"
+                          class="item-checkbox"
+                          data-cart-id="<%= item.idCart %>"
+                          data-price="<%= item.priceProduct %>"
+                          data-quantity="<%= item.quantity %>"
+                          onchange="updateTotal()"
+                          checked
+                        />
+                      </td>
                       <td>
                         <div class="img">
                           <a
@@ -240,7 +258,7 @@
                     </tr>
                     <% } %> <% } else { %>
                     <tr>
-                      <td colspan="5" class="text-center">
+                      <td colspan="6" class="text-center">
                         <p>Giỏ hàng trống</p>
                         <a href="/san-pham" class="btn btn-primary"
                           >Tiếp tục mua sắm</a
@@ -267,13 +285,13 @@
                     <div class="cart-content">
                       <h1>Thống kê giỏ hàng</h1>
                       <p>
-                        Tổng tiền sản phẩm<span
+                        Tổng tiền sản phẩm<span id="subtotal"
                           ><%= (cartTotal || 0).toLocaleString() %> đ</span
                         >
                       </p>
-                      <p>Phí ship<span>30.000 đ</span></p>
+                      <p>Phí ship<span id="shipping">30.000 đ</span></p>
                       <h2>
-                        Tổng cộng<span
+                        Tổng cộng<span id="total"
                           ><%= ((cartTotal || 0) + 30000).toLocaleString() %>
                           đ</span
                         >
@@ -281,9 +299,13 @@
                     </div>
                     <div class="cart-btn">
                       <% if (cartItems && cartItems.length > 0) { %>
-                      <a href="/thanh-toan" class="btn btn-primary"
-                        >Thanh Toán</a
+                      <button
+                        onclick="checkout()"
+                        class="btn btn-primary"
+                        id="checkoutBtn"
                       >
+                        Thanh Toán
+                      </button>
                       <% } else { %>
                       <button class="btn btn-secondary" disabled>
                         Giỏ hàng trống
@@ -327,13 +349,8 @@
                   <a href="https://www.linkedin.com/in/huy-tran-57777b202/"
                     ><i class="fab fa-linkedin-in"></i
                   ></a>
-                  <a href="https://www.instagram.com/huy_jr18"
-                    ><i class="fab fa-instagram"></i
-                  ></a>
-                  <a
-                    href="https://www.youtube.com/channel/UCctcteJFmH4Wxc8npHW9Cog"
-                    ><i class="fab fa-youtube"></i
-                  ></a>
+                  <a href="#"><i class="fab fa-instagram"></i></a>
+                  <a href="#"><i class="fab fa-youtube"></i></a>
                 </div>
               </div>
             </div>
@@ -413,6 +430,14 @@
       function updateQuantity(cartId, newQuantity) {
         if (newQuantity < 0) newQuantity = 0;
 
+        // Nếu số lượng = 0, xóa sản phẩm khỏi giỏ hàng
+        if (newQuantity === 0) {
+          if (confirm("Bạn có muốn xóa sản phẩm này khỏi giỏ hàng?")) {
+            removeFromCart(cartId);
+          }
+          return;
+        }
+
         $.ajax({
           url: "/cart/update",
           method: "POST",
@@ -432,6 +457,96 @@
           },
         });
       }
+
+      // Function để xóa sản phẩm khỏi giỏ hàng
+      function removeFromCart(cartId) {
+        $.ajax({
+          url: "/cart/remove",
+          method: "POST",
+          data: {
+            idCart: cartId,
+          },
+          success: function (response) {
+            if (response.success) {
+              location.reload();
+            } else {
+              alert(response.message || "Có lỗi xảy ra khi xóa sản phẩm");
+            }
+          },
+          error: function () {
+            alert("Có lỗi xảy ra khi xóa sản phẩm khỏi giỏ hàng");
+          },
+        });
+      }
+
+      // Function để chọn/bỏ chọn tất cả sản phẩm
+      function selectAllItems() {
+        const selectAllCheckbox = document.getElementById("selectAll");
+        const itemCheckboxes = document.querySelectorAll(".item-checkbox");
+
+        itemCheckboxes.forEach((checkbox) => {
+          checkbox.checked = selectAllCheckbox.checked;
+        });
+
+        updateTotal();
+      }
+
+      // Function để cập nhật tổng tiền
+      function updateTotal() {
+        const itemCheckboxes = document.querySelectorAll(
+          ".item-checkbox:checked"
+        );
+        let subtotal = 0;
+
+        itemCheckboxes.forEach((checkbox) => {
+          const price = parseInt(checkbox.dataset.price);
+          const quantity = parseInt(checkbox.dataset.quantity);
+          subtotal += price * quantity;
+        });
+
+        const shipping = 30000;
+        const total = subtotal + shipping;
+
+        // Cập nhật hiển thị
+        document.getElementById("subtotal").textContent =
+          subtotal.toLocaleString() + " đ";
+        document.getElementById("total").textContent =
+          total.toLocaleString() + " đ";
+
+        // Vô hiệu hóa nút thanh toán nếu không có sản phẩm nào được chọn
+        const checkoutBtn = document.getElementById("checkoutBtn");
+        if (checkoutBtn) {
+          checkoutBtn.disabled = itemCheckboxes.length === 0;
+          checkoutBtn.textContent =
+            itemCheckboxes.length === 0
+              ? "Chọn sản phẩm để thanh toán"
+              : "Thanh Toán";
+        }
+      }
+
+      // Function để xử lý thanh toán chỉ các sản phẩm được chọn
+      function checkout() {
+        const selectedItems = document.querySelectorAll(
+          ".item-checkbox:checked"
+        );
+
+        if (selectedItems.length === 0) {
+          alert("Vui lòng chọn ít nhất một sản phẩm để thanh toán");
+          return;
+        }
+
+        const selectedCartIds = Array.from(selectedItems).map(
+          (checkbox) => checkbox.dataset.cartId
+        );
+
+        // Chuyển hướng đến trang thanh toán với các sản phẩm đã chọn
+        window.location.href = "/thanh-toan?items=" + selectedCartIds.join(",");
+      }
+
+      // Khởi tạo khi trang load
+      document.addEventListener("DOMContentLoaded", function () {
+        updateTotal();
+      });
     </script>
   </body>
 </html>
