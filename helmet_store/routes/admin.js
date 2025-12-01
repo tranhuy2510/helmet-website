@@ -84,16 +84,16 @@ router.get("/", function (req, res, next) {
           if (err) throw err;
           stats.totalUsers = userResult[0].totalUsers;
 
-          // Đếm tổng số đơn hàng
+          // Tính tổng số đơn hàng (không tính đơn hàng đã hủy)
           db.query(
-            "SELECT COUNT(*) as totalOrders FROM orders",
+            "SELECT COUNT(*) as totalOrders FROM orders WHERE status != 'cancelled'",
             (err, orderResult) => {
               if (err) throw err;
               stats.totalOrders = orderResult[0].totalOrders;
 
-              // Tính tổng doanh thu
+              // Tính tổng doanh thu (không tính đơn hàng đã hủy)
               db.query(
-                "SELECT SUM(totalAmount) as totalRevenue FROM orders",
+                "SELECT SUM(totalAmount) as totalRevenue FROM orders WHERE status != 'cancelled'",
                 (err, revenueResult) => {
                   if (err) throw err;
                   stats.totalRevenue = revenueResult[0].totalRevenue || 0;
@@ -233,51 +233,149 @@ router.get("/orders", function (req, res, next) {
                ORDER BY o.createdAt DESC`;
   db.query(sql, (err, orders) => {
     if (err) throw err;
+
+    // Lấy message từ session và xóa nó
+    const message = req.session.message;
+    delete req.session.message;
+
     renderWithLayout(res, "admin/orders", {
       orders: orders,
       user: req.session.User,
+      message: message,
     });
   });
 });
 
 // Chi tiết đơn hàng
-router.get("/orders/:id", function (req, res, next) {
-  let orderId = req.params.id;
-  let sql = `SELECT o.*, u.username, u.ho, u.ten, u.phone, u.email, u.address
-               FROM orders o 
-               LEFT JOIN user u ON o.idUser = u.idUser 
-               WHERE o.idOrder = ?`;
+router.get("/orders/:id", async function (req, res, next) {
+  try {
+    const modelOrder = require("../models/model_order");
+    const orderId = req.params.id;
 
-  db.query(sql, [orderId], (err, order) => {
-    if (err) throw err;
+    // Lấy chi tiết đơn hàng bằng model
+    const order = await modelOrder.getOrderDetails(orderId);
 
-    // Lấy chi tiết sản phẩm trong đơn hàng
-    let detailSql = `SELECT oi.*, p.nameProduct, oi.price
-                        FROM order_items oi
-                        LEFT JOIN product p ON oi.idProduct = p.idProduct
-                        WHERE oi.idOrder = ?`;
-
-    db.query(detailSql, [orderId], (err, orderDetails) => {
-      if (err) throw err;
-      renderWithLayout(res, "admin/order-detail", {
-        order: order[0],
-        orderDetails: orderDetails,
-        user: req.session.User,
+    if (!order) {
+      return res.status(404).render("error", {
+        message: "Không tìm thấy đơn hàng",
+        error: { status: 404, stack: "" },
       });
+    }
+
+    // Render template admin order-detail
+    res.render("admin/order-detail", {
+      order: order,
+      user: req.session.User,
     });
-  });
+  } catch (error) {
+    console.error("Admin order detail error:", error);
+    res.status(500).render("error", {
+      message: "Lỗi khi tải chi tiết đơn hàng",
+      error: { status: 500, stack: error.stack },
+    });
+  }
 });
 
 // Cập nhật trạng thái đơn hàng
-router.post("/orders/update-status/:id", function (req, res, next) {
-  let orderId = req.params.id;
-  let { status } = req.body;
-  let sql = "UPDATE orders SET status = ? WHERE idOrder = ?";
-  db.query(sql, [status, orderId], (err, result) => {
-    if (err) throw err;
-    res.redirect("/admin/orders");
-  });
-});
+router.post(
+  "/orders/:id/update-status",
+  isAdmin,
+  async function (req, res, next) {
+    try {
+      const modelOrder = require("../models/model_order");
+      const orderId = req.params.id;
+      const { status } = req.body;
+
+      console.log("=== UPDATE ORDER STATUS ===");
+      console.log("Order ID:", orderId);
+      console.log("New Status:", status);
+      console.log("Request body:", req.body);
+
+      // Lấy thông tin đơn hàng hiện tại để kiểm tra trạng thái
+      const currentOrder = await modelOrder.getOrderDetails(orderId);
+      if (!currentOrder) {
+        req.session.message = {
+          type: "error",
+          text: "Không tìm thấy đơn hàng",
+        };
+        return res.redirect("/admin/orders");
+      }
+
+      // Định nghĩa thứ tự trạng thái (không được chuyển ngược)
+      const statusOrder = [
+        "pending",
+        "confirmed",
+        "preparing",
+        "shipping",
+        "delivered",
+      ];
+      const currentStatusIndex = statusOrder.indexOf(currentOrder.status);
+      const newStatusIndex = statusOrder.indexOf(status);
+
+      // Kiểm tra không cho phép chuyển ngược (trừ trường hợp hủy)
+      if (status !== "cancelled" && currentOrder.status !== "cancelled") {
+        if (newStatusIndex < currentStatusIndex) {
+          req.session.message = {
+            type: "error",
+            text: `Không thể chuyển trạng thái từ "${getStatusText(
+              currentOrder.status
+            )}" về "${getStatusText(status)}"`,
+          };
+          return res.redirect("/admin/orders");
+        }
+      }
+
+      // Không cho phép thay đổi nếu đã hủy hoặc đã giao
+      if (currentOrder.status === "cancelled") {
+        req.session.message = {
+          type: "error",
+          text: "Không thể thay đổi trạng thái đơn hàng đã hủy",
+        };
+        return res.redirect("/admin/orders");
+      }
+
+      if (currentOrder.status === "delivered" && status !== "delivered") {
+        req.session.message = {
+          type: "error",
+          text: "Không thể thay đổi trạng thái đơn hàng đã giao",
+        };
+        return res.redirect("/admin/orders");
+      }
+
+      // Cập nhật trạng thái đơn hàng
+      await modelOrder.updateOrderStatus(orderId, status);
+
+      req.session.message = {
+        type: "success",
+        text: `Cập nhật trạng thái đơn hàng #${orderId} thành "${getStatusText(
+          status
+        )}" thành công!`,
+      };
+      res.redirect("/admin/orders");
+    } catch (error) {
+      console.error("Update order status error:", error);
+      req.session.message = {
+        type: "error",
+        text:
+          "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng: " + error.message,
+      };
+      res.redirect("/admin/orders");
+    }
+  }
+);
+
+// Helper function để lấy text hiển thị của trạng thái
+function getStatusText(status) {
+  const statusMap = {
+    pending: "Chờ xác nhận",
+    confirmed: "Đã xác nhận",
+    preparing: "Đang chuẩn bị",
+    shipping: "Đang giao",
+    delivered: "Đã giao",
+    cancelled: "Đã hủy",
+  };
+  return statusMap[status] || status;
+}
 
 // Quản lý người dùng
 router.get("/users", function (req, res, next) {
