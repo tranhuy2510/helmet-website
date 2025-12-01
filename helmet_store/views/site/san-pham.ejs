@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="utf-8" />
     <link rel="shortcut icon" href="/img/favicon.ico" />
@@ -34,20 +34,8 @@
   </head>
 
   <body>
-    <% 
-      if (typeof slug !== 'function') { 
-        var slug = function(name) { 
-          if (!name) return ''; 
-          return String(name)
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/đ/g, 'd')
-            .replace(/Đ/g, 'd')
-            .toLowerCase()
-            .replace(/\s+/g, '-'); 
-        }; 
-      } 
-    %>
+    <% if (typeof slug !== 'function') { var slug = function(name) { if (!name) return ''; return String(name) .normalize('NFD') .replace(/[\u0300-\u036f]/g, '') .replace(/đ/g, 'd') .replace(/Đ/g, 'd') .toLowerCase() .replace(/\s+/g, '-'); }; } %>
+    
     <!-- Top bar Start -->
     <div class="top-bar">
       <div class="container-fluid">
@@ -82,8 +70,8 @@
             id="navbarCollapse"
           >
             <div class="navbar-nav mr-auto">
-              <a href="/" class="nav-item nav-link active">Trang Chủ</a>
-              <a href="/san-pham" class="nav-item nav-link">Sản Phẩm</a>
+              <a href="/" class="nav-item nav-link">Trang Chủ</a>
+              <a href="/san-pham" class="nav-item nav-link active">Sản Phẩm</a>
               <!-- <a href="product-detail.html" class="nav-item nav-link">Product Detail</a> -->
               <a href="/cart" class="nav-item nav-link">Giỏ Hàng</a>
               <a href="/thanh-toan" class="nav-item nav-link">Thanh Toán</a>
@@ -294,10 +282,7 @@
                     <i class="fa fa-filter"></i> <strong>Bộ lọc:</strong>
                     <% if (currentPriceRange) { %>
                     <span class="badge badge-primary ml-2">
-                      Khoảng giá: <% if (currentPriceRange === '0-500000') { %>0₫ - 500.000 ₫ <% } %> 
-                      <% if (currentPriceRange === '500000-1000000') { %>500.000 ₫ - 1.000.000 ₫<% } %> 
-                      <% if (currentPriceRange === '1000000-2000000') { %>1.000.000 ₫ - 2.000.000 ₫<% } %>
-                      <% if (currentPriceRange === '2000000-5000000') { %>2.000.000 ₫ - 5.000.000 ₫<% } %> 
+                      Khoảng giá: <% if (currentPriceRange === '0-500000') { %> 0₫ - 500.000 ₫ <% } %> <% if (currentPriceRange === '500000-1000000') { %>500.000 ₫ - 1.000.000 ₫<% } %> <% if (currentPriceRange === '1000000-2000000') { %>1.000.000 ₫ - 2.000.000 ₫<% } %> <% if (currentPriceRange === '2000000-5000000') { %>2.000.000 ₫ - 5.000.000 ₫<% } %>
                       <%if (currentPriceRange === '5000000-up') { %>Trên 5.000.000 ₫<% } %>
                     </span>
                     <% } %> <% if (currentSort) { %>
@@ -315,7 +300,51 @@
 
               <div class="col-md-12">
                 <div id="myTable" class="row">
-                  <%- include('danh-sach-san-pham') %>
+                  <% for (product of listPro) { %>
+                    <div class="col-md-4">
+                      <div class="product-item">
+                        <div class="product-title">
+                          <a href="/san-pham/<%= slug(product.nameProduct) %>"><%=product.nameProduct%></a>
+                          <div class="ratting">
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                            <i class="fa fa-star"></i>
+                          </div>
+                        </div>
+                        <div class="product-image">
+                          <a href="/san-pham/<%= slug(product.nameProduct) %>">
+                            <img src="../<%=product.imgProduct%>" alt="Product Image" />
+                          </a>
+                          <div class="product-action" data-product-id="<%=product.idProduct%>">
+                            <a href="#" class="add-to-cart" data-product-id="<%=product.idProduct%>"
+                              ><i class="fa fa-cart-plus"></i
+                            ></a>
+                            <a
+                              href="#"
+                              class="add-to-wishlist <%= userWishlistIds && userWishlistIds.includes(product.idProduct) ? 'active' : '' %>"
+                              data-product-id="<%=product.idProduct%>"
+                              title="<%= userWishlistIds && userWishlistIds.includes(product.idProduct) ? 'Bỏ thích' : 'Yêu thích' %>"
+                              ><i class="<%= userWishlistIds && userWishlistIds.includes(product.idProduct) ? 'fas' : 'far' %> fa-heart"></i
+                            ></a>
+                            <a class="slug" href="/san-pham/<%= slug(product.nameProduct) %>"
+                              ><i class="fa fa-search"></i
+                            ></a>
+                          </div>
+                        </div>
+                        <div class="product-price">
+                          <h3><%=product.priceProduct.toLocaleString('vi-VN')%><span> ₫</span></h3>
+                          <a
+                            class="btn add-to-cart"
+                            href="#"
+                            data-product-id="<%=product.idProduct%>"
+                            ><i class="fa fa-shopping-cart"></i>Mua Ngay</a
+                          >
+                        </div>
+                      </div>
+                    </div>
+                  <% } %>
                 </div>
               </div>
             </div>
@@ -350,7 +379,8 @@
                   <% for (cat of listCat) { %>
                   <li class="nav-item">
                     <a class="nav-link" href="/danh-muc/<%=cat.nameCat%>"
-                      ><i class="fa fa-motorcycle"></i>Nón Fullface <%=cat.nameCat %></a>
+                      ><i class="fa fa-motorcycle"></i>Nón Fullface <%=cat.nameCat %></a
+                    >
                   </li>
                   <% } %>
                 </ul>
@@ -391,8 +421,8 @@
                         href="#"
                         class="add-to-wishlist"
                         data-product-id="<%=product.idProduct%>"
-                        title="Yêu thích"
-                        ><i class="fa fa-heart"></i
+                        title="<%= userWishlistIds && userWishlistIds.includes(product.idProduct) ? 'Bỏ thích' : 'Yêu thích' %>"
+                        ><i class="<%= userWishlistIds && userWishlistIds.includes(product.idProduct) ? 'fas' : 'far' %> fa-heart"></i
                       ></a>
                       <a
                         class="slug"
@@ -419,33 +449,7 @@
               </div>
             </div>
 
-            <div class="sidebar-widget brands">
-              <h2 class="title">Our Brands</h2>
-              <ul>
-                <li><a href="#">Nulla </a><span>(45)</span></li>
-                <li><a href="#">Curabitur </a><span>(34)</span></li>
-                <li><a href="#">Nunc </a><span>(67)</span></li>
-                <li><a href="#">Ullamcorper</a><span>(74)</span></li>
-                <li><a href="#">Fusce </a><span>(89)</span></li>
-                <li><a href="#">Sagittis</a><span>(28)</span></li>
-              </ul>
-            </div>
 
-            <div class="sidebar-widget tag">
-              <h2 class="title">Tags Cloud</h2>
-              <a href="#">Lorem ipsum</a>
-              <a href="#">Vivamus</a>
-              <a href="#">Phasellus</a>
-              <a href="#">pulvinar</a>
-              <a href="#">Curabitur</a>
-              <a href="#">Fusce</a>
-              <a href="#">Sem quis</a>
-              <a href="#">Mollis metus</a>
-              <a href="#">Sit amet</a>
-              <a href="#">Vel posuere</a>
-              <a href="#">orci luctus</a>
-              <a href="#">Nam lorem</a>
-            </div>
           </div>
           <!-- Side Bar End -->
         </div>
@@ -517,13 +521,8 @@
                   <a href="https://www.linkedin.com/in/huy-tran-57777b202/"
                     ><i class="fab fa-linkedin-in"></i
                   ></a>
-                  <a href="https://www.instagram.com/huy_jr18"
-                    ><i class="fab fa-instagram"></i
-                  ></a>
-                  <a
-                    href="https://www.youtube.com/channel/UCctcteJFmH4Wxc8npHW9Cog"
-                    ><i class="fab fa-youtube"></i
-                  ></a>
+                  <a href="#"><i class="fab fa-instagram"></i></a>
+                  <a href="#"><i class="fab fa-youtube"></i></a>
                 </div>
               </div>
             </div>

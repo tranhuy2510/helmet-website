@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="utf-8" />
     <title>Helmet Store</title>
@@ -67,7 +67,7 @@
             id="navbarCollapse"
           >
             <div class="navbar-nav mr-auto">
-              <a href="/" class="nav-item nav-link active">Trang Chủ</a>
+              <a href="/" class="nav-item nav-link">Trang Chủ</a>
               <a href="/san-pham" class="nav-item nav-link">Sản Phẩm</a>
               <!-- <a href="product-detail.html" class="nav-item nav-link">Product Detail</a> -->
               <a href="/cart" class="nav-item nav-link">Giỏ Hàng</a>
@@ -78,14 +78,11 @@
               <div class="nav-item dropdown">
                 <a
                   href="#"
-                  class="nav-link dropdown-toggle"
+                  class="nav-link dropdown-toggle active"
                   data-toggle="dropdown"
-                  >Trang khác</a
+                  >Sản phẩm đã thích</a
                 >
                 <div class="dropdown-menu">
-                  <a href="/wishlist" class="dropdown-item"
-                    >Sản phẩm đã thích</a
-                  >
                   <a href="/lien-he" class="dropdown-item">Liên hệ</a>
                 </div>
               </div>
@@ -100,7 +97,9 @@
                   ><i class="fa fa-user"></i> <%= user.nameUser %></a
                 >
                 <div class="dropdown-menu">
-                  <a href="/users/tai-khoan" class="dropdown-item">Tài khoản của tôi</a>
+                  <a href="/users/tai-khoan" class="dropdown-item"
+                    >Tài khoản của tôi</a
+                  >
                   <a href="/orders" class="dropdown-item">Đơn hàng</a>
                   <a href="/users/dang-xuat" class="dropdown-item">Đăng xuất</a>
                 </div>
@@ -203,34 +202,112 @@
                         </div>
                       </td>
                       <td><%=item.priceProduct.toLocaleString()%> đ</td>
-                      <td>
-                        <div class="qty">
-                          <button class="btn-minus">
-                            <i class="fa fa-minus"></i>
+                      <td style="text-align: center">
+                        <div
+                          class="qty wishlist-qty"
+                          style="
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 3px;
+                            margin: 0 auto;
+                          "
+                        >
+                          <button
+                            class="btn-minus wishlist-btn"
+                            data-product-id="<%= item.idProduct %>"
+                            data-change="-1"
+                            style="
+                              width: 32px;
+                              height: 32px;
+                              border: 1px solid #007bff;
+                              background: #007bff;
+                              color: white;
+                              border-radius: 4px;
+                              display: flex;
+                              align-items: center;
+                              justify-content: center;
+                              cursor: pointer;
+                              outline: none;
+                            "
+                          >
+                            <i
+                              class="fa fa-minus"
+                              style="
+                                font-size: 10px;
+                                color: white;
+                                pointer-events: none;
+                              "
+                            ></i>
                           </button>
                           <input
                             type="text"
                             value="1"
                             id="qty-<%= item.idProduct %>"
+                            min="1"
+                            readonly
+                            style="
+                              width: 50px;
+                              height: 32px;
+                              text-align: center;
+                              border: 1px solid #ddd;
+                              border-radius: 4px;
+                              margin: 0;
+                              font-size: 14px;
+                              background: white;
+                              color: #333;
+                              font-weight: bold;
+                              box-sizing: border-box;
+                              padding: 0;
+                              line-height: 30px;
+                            "
                           />
-                          <button class="btn-plus">
-                            <i class="fa fa-plus"></i>
+                          <button
+                            class="btn-plus wishlist-btn"
+                            data-product-id="<%= item.idProduct %>"
+                            data-change="1"
+                            style="
+                              width: 32px;
+                              height: 32px;
+                              border: 1px solid #28a745;
+                              background: #28a745;
+                              color: white;
+                              border-radius: 4px;
+                              display: flex;
+                              align-items: center;
+                              justify-content: center;
+                              cursor: pointer;
+                              outline: none;
+                            "
+                          >
+                            <i
+                              class="fa fa-plus"
+                              style="
+                                font-size: 10px;
+                                color: white;
+                                pointer-events: none;
+                              "
+                            ></i>
                           </button>
                         </div>
                       </td>
-                      <td>
+                      <td style="text-align: center">
                         <button
-                          class="btn btn-primary add-to-cart"
+                          class="btn btn-primary btn-sm move-to-cart"
                           data-product-id="<%= item.idProduct %>"
+                          data-quantity="1"
+                          data-size="M"
+                          style="margin-bottom: 5px; width: 120px"
                         >
-                          Thêm vào giỏ
+                          <i class="fa fa-cart-plus"></i> Thêm vào giỏ
                         </button>
                       </td>
-                      <td>
+                      <td style="text-align: center">
                         <button
-                          class="btn btn-danger remove-from-wishlist"
+                          class="btn btn-danger btn-sm"
                           data-product-id="<%= item.idProduct %>"
                           onclick="removeFromWishlist(<%= item.idProduct %>)"
+                          style="width: 50px; height: 35px"
                         >
                           <i class="fa fa-trash"></i>
                         </button>
@@ -283,13 +360,8 @@
                   <a href="https://www.linkedin.com/in/huy-tran-57777b202/"
                     ><i class="fab fa-linkedin-in"></i
                   ></a>
-                  <a href="https://www.instagram.com/huy_jr18"
-                    ><i class="fab fa-instagram"></i
-                  ></a>
-                  <a
-                    href="https://www.youtube.com/channel/UCctcteJFmH4Wxc8npHW9Cog"
-                    ><i class="fab fa-youtube"></i
-                  ></a>
+                  <a href="#"><i class="fab fa-instagram"></i></a>
+                  <a href="#"><i class="fab fa-youtube"></i></a>
                 </div>
               </div>
             </div>
@@ -378,6 +450,8 @@
             },
             success: function (response) {
               if (response.success) {
+                // Cập nhật wishlist count realtime
+                updateWishlistCount(-1);
                 location.reload();
               } else {
                 alert(response.message);
@@ -390,14 +464,141 @@
         }
       }
 
-      // Handle add to cart from wishlist
-      $(".add-to-cart").on("click", function () {
-        var productId = $(this).data("product-id");
-        var quantity = $("#qty-" + productId).val();
-        var size = $(this).data("size");
+      // Function cập nhật số lượng sản phẩm trong wishlist
+      function updateWishlistQuantity(productId, change) {
+        var qtyInput = document.getElementById("qty-" + productId);
+        if (!qtyInput) return;
 
-        addToCart(productId, quantity, size);
+        var currentQty = parseInt(qtyInput.value) || 1;
+        var newQty = currentQty + change;
+
+        if (newQty < 1) newQty = 1;
+        if (newQty > 99) newQty = 99;
+
+        qtyInput.value = newQty;
+
+        console.log(
+          `Updated quantity for product ${productId}: ${currentQty} -> ${newQty}`
+        );
+      }
+
+      // Event delegation cho quantity buttons
+      $(document).ready(function () {
+        // Unbind any existing events để tránh duplicate
+        $(document).off("click.wishlist mousedown.wishlist");
+
+        // Sử dụng namespace và specific selector cho wishlist buttons
+        $(document).on("click.wishlist", ".wishlist-btn", function (e) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+
+          // Double-check để tránh multiple clicks
+          if ($(this).data("processing")) {
+            return false;
+          }
+
+          $(this).data("processing", true);
+
+          var productId = $(this).data("product-id");
+          var change = parseInt($(this).data("change"));
+
+          console.log(
+            `Wishlist button clicked: product ${productId}, change ${change}`
+          );
+
+          if (productId && change) {
+            updateWishlistQuantity(productId, change);
+          }
+
+          // Reset processing flag sau một khoảng thời gian ngắn
+          var button = $(this);
+          setTimeout(function () {
+            button.removeData("processing");
+          }, 300);
+
+          return false;
+        });
+
+        console.log("Wishlist quantity handlers initialized");
       });
+
+      // Function thêm vào giỏ hàng từ wishlist
+      function addToCartFromWishlist(productId) {
+        var quantity = document.getElementById("qty-" + productId).value;
+
+        $.ajax({
+          url: "/cart/add",
+          method: "POST",
+          data: {
+            idProduct: productId,
+            quantity: parseInt(quantity),
+            size: "M", // default size
+          },
+          success: function (response) {
+            if (response.success) {
+              // Xóa sản phẩm khỏi wishlist sau khi add to cart thành công
+              $.ajax({
+                url: "/wishlist/remove",
+                method: "POST",
+                data: {
+                  idProduct: productId,
+                },
+                success: function (removeResponse) {
+                  if (removeResponse.success) {
+                    alert(
+                      "Đã thêm sản phẩm vào giỏ hàng và xóa khỏi danh sách yêu thích!"
+                    );
+                    // Cập nhật cart count và wishlist count realtime
+                    updateCartCount(parseInt(quantity));
+                    updateWishlistCount(-1);
+                    location.reload();
+                  } else {
+                    alert(
+                      "Đã thêm vào giỏ hàng nhưng không thể xóa khỏi danh sách yêu thích"
+                    );
+                    updateCartCount(parseInt(quantity));
+                  }
+                },
+                error: function () {
+                  alert(
+                    "Đã thêm vào giỏ hàng nhưng có lỗi khi xóa khỏi danh sách yêu thích"
+                  );
+                  updateCartCount(parseInt(quantity));
+                },
+              });
+            } else {
+              alert(response.message || "Có lỗi xảy ra");
+            }
+          },
+          error: function () {
+            alert("Lỗi khi thêm sản phẩm vào giỏ hàng");
+          },
+        });
+      }
+
+      // Function cập nhật wishlist count realtime
+      function updateWishlistCount(change) {
+        const wishlistCountElem = document.querySelector(".wishlist span");
+        if (wishlistCountElem) {
+          const currentCount = parseInt(
+            wishlistCountElem.textContent.match(/\d+/)[0]
+          );
+          const newCount = Math.max(0, currentCount + change);
+          wishlistCountElem.textContent = `(${newCount})`;
+        }
+      }
+
+      // Function cập nhật cart count realtime
+      function updateCartCount(change) {
+        const cartCountElem = document.querySelector(".cart span");
+        if (cartCountElem) {
+          const currentCount = parseInt(
+            cartCountElem.textContent.match(/\d+/)[0]
+          );
+          const newCount = Math.max(0, currentCount + change);
+          cartCountElem.textContent = `(${newCount})`;
+        }
+      }
     </script>
   </body>
 </html>
