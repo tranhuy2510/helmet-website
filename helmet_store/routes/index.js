@@ -4,6 +4,7 @@ var modelIndex = require("../models/model_index");
 var modelUser = require("../models/model_user");
 var modelProduct = require("../models/model_product");
 var modelCart = require("../models/model_cart");
+var modelWishlist = require("../models/model_wishlist");
 var router = express.Router();
 
 /* GET home page. */
@@ -11,10 +12,23 @@ router.get("/", async function (req, res, next) {
   let listCat = await modelIndex.listCat();
   let listRecent = await modelIndex.listRecent();
   let listNewArrival = await modelIndex.listNewArrival();
+  
+  // Get user wishlist IDs for displaying heart states
+  let userWishlistIds = [];
+  if (req.session.User) {
+    try {
+      userWishlistIds = await modelWishlist.getUserWishlistIds(req.session.User.id);
+    } catch (error) {
+      console.log("Error getting wishlist IDs:", error);
+      userWishlistIds = [];
+    }
+  }
+  
   res.render("site/index", {
     listCat: listCat,
     listNewArrival: listNewArrival,
     listRecent: listRecent,
+    userWishlistIds: userWishlistIds,
   });
 });
 // Cart route moved to /cart route file
