@@ -28,7 +28,8 @@ String(name).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').
           href="#"
           class="add-to-wishlist"
           data-product-id="<%=product.idProduct%>"
-          ><i class="fa fa-heart"></i
+          title="Yêu thích"
+          ><i class="<% if (typeof userWishlistIds !== 'undefined' && userWishlistIds && userWishlistIds.includes(product.idProduct)) { %>fas<% } else { %>far<% } %> fa-heart"></i
         ></a>
         <a class="slug" href="/san-pham/<%= slug(product.nameProduct) %>"
           ><i class="fa fa-search"></i
