@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="utf-8" />
     <link href="img/favicon.ico" rel="icon" />
@@ -323,7 +323,8 @@
                         href="#"
                         class="add-to-wishlist"
                         data-product-id="<%=product.idProduct%>"
-                        ><i class="fa fa-heart"></i
+                        title="Yêu thích"
+                        ><i class="<% if (userWishlistIds.includes(product.idProduct)) { %>fas<% } else { %>far<% } %> fa-heart"></i
                       ></a>
                       <a
                         class="slug"
@@ -447,13 +448,8 @@
                   <a href="https://www.linkedin.com/in/huy-tran-57777b202/"
                     ><i class="fab fa-linkedin-in"></i
                   ></a>
-                  <a href="https://www.instagram.com/huy_jr18"
-                    ><i class="fab fa-instagram"></i
-                  ></a>
-                  <a
-                    href="https://www.youtube.com/channel/UCctcteJFmH4Wxc8npHW9Cog"
-                    ><i class="fab fa-youtube"></i
-                  ></a>
+                  <a href="#"><i class="fab fa-instagram"></i></a>
+                  <a href="#"><i class="fab fa-youtube"></i></a>
                 </div>
               </div>
             </div>
@@ -571,7 +567,9 @@
                   }"><i class="fa fa-cart-plus"></i></a>
                   <a href="#" class="add-to-wishlist" data-product-id="${
                     product.idProduct
-                  }"><i class="fa fa-heart"></i></a>
+                  }"><i class="${
+                    window.userWishlistIds && window.userWishlistIds.includes(product.idProduct) ? 'fas' : 'far'
+                  } fa-heart"></i></a>
                   <a href="/san-pham/${replaceNameProduct(
                     product.nameProduct
                   ).toLowerCase()}"><i class="fa fa-search"></i></a>
@@ -589,14 +587,54 @@
             </div>`;
     }
     sp_theo_loai.innerHTML += str;
+
+    // Reinitialize search/filter after data is loaded
+    setTimeout(function () {
+      initializeProductFilters();
+    }, 100);
   };
 
+  function initializeProductFilters() {
+    // Reattach event listeners for dynamically loaded content
+    $("#myInput")
+      .off("keyup")
+      .on("keyup", function () {
+        var value = $(this).val().toLowerCase();
+        $("#myTable .col-md-4").filter(function () {
+          $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+        });
+      });
+
+    console.log(
+      "Product filters initialized for",
+      $("#myTable .col-md-4").length,
+      "products"
+    );
+  }
+
+  // Load products immediately when page loads
+  document.addEventListener('DOMContentLoaded', function() {
+    const listPro = <%- JSON.stringify(listPro) %>;
+    const userWishlistIds = <%- JSON.stringify(userWishlistIds || []) %>;
+    
+    console.log('listPro:', listPro);
+    console.log('userWishlistIds:', userWishlistIds);
+    
+    // Make userWishlistIds available globally for the template
+    window.userWishlistIds = userWishlistIds;
+    
+    xuLyDuLieu(listPro);
+  });
+
+  // Keep the old fetch logic as fallback
   var paramsString = window.location.href;
-  var index = paramsString.lastIndexOf("c/") + 2;
+  var index = paramsString.lastIndexOf("/") + 1;
   console.log(index);
   var ten_danh_muc = paramsString.slice(index);
   console.log(ten_danh_muc);
 
+  // Fallback: fetch from API if no data from server
+  /*
   window
     .fetch(`http://localhost:3000/danh-muc/api/${ten_danh_muc}`)
     .then((res) => {
@@ -609,6 +647,7 @@
     .catch((err) => {
       console.log(err);
     });
+  */
 
   function xoa_dau(str) {
     str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, "a");
@@ -634,13 +673,89 @@
     return newNameProduct;
   }
 
-  // Search Product
+  // Search Product - sửa lại để hoạt động với dynamic content
+  var searchFunction;
+  var sortFunction;
+  var filterFunction;
+
   $(document).ready(function () {
+    // Search functionality
     $("#myInput").on("keyup", function () {
       var value = $(this).val().toLowerCase();
       $("#myTable .col-md-4").filter(function () {
         $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
       });
     });
+
+    // Sort functionality
+    $(".product-short .dropdown-item").on("click", function (e) {
+      e.preventDefault();
+      var sortType = $(this).text();
+      sortProducts(sortType);
+      $(".product-short .dropdown-toggle").text(sortType);
+    });
+
+    // Price filter functionality
+    $(".product-price-range .dropdown-item").on("click", function (e) {
+      e.preventDefault();
+      var priceRange = $(this).text();
+      filterByPrice(priceRange);
+      $(".product-price-range .dropdown-toggle").text(priceRange);
+    });
   });
+
+  function sortProducts(sortType) {
+    var container = $("#myTable");
+    var products = container.children(".col-md-4").get();
+
+    products.sort(function (a, b) {
+      if (sortType === "Mới nhất") {
+        return 0; // Giữ thứ tự hiện tại
+      } else if (sortType === "Phổ biến" || sortType === "Bán chạy nhất") {
+        return Math.random() - 0.5; // Random sort
+      }
+      return 0;
+    });
+
+    $.each(products, function (index, item) {
+      container.append(item);
+    });
+  }
+
+  function filterByPrice(priceRange) {
+    var minPrice = 0;
+    var maxPrice = Infinity;
+
+    if (priceRange === "0 ₫ - 500.000 ₫") {
+      minPrice = 0;
+      maxPrice = 500000;
+    } else if (priceRange === "500.000 ₫ - 1.000.000 ₫") {
+      minPrice = 500000;
+      maxPrice = 1000000;
+    } else if (priceRange === "1.000.000 ₫ - 2.000.000 ₫") {
+      minPrice = 1000000;
+      maxPrice = 2000000;
+    } else if (priceRange === "2.000.000 ₫ - 5.000.000 ₫") {
+      minPrice = 2000000;
+      maxPrice = 5000000;
+    } else if (priceRange === "Trên 5.000.000 ₫") {
+      minPrice = 5000000;
+      maxPrice = Infinity;
+    } else {
+      // "Sắp xếp theo giá" - hiện tất cả
+      $("#myTable .col-md-4").show();
+      return;
+    }
+
+    $("#myTable .col-md-4").each(function () {
+      var priceText = $(this).find(".product-price h3").text();
+      var price = parseInt(priceText.replace(/[^\d]/g, ""));
+
+      if (price >= minPrice && price <= maxPrice) {
+        $(this).show();
+      } else {
+        $(this).hide();
+      }
+    });
+  }
 </script>
