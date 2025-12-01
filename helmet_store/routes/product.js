@@ -3,6 +3,9 @@ var express = require("express");
 var router = express.Router();
 var modelProduct = require("../models/model_product"); //nhúng model products vào controller này để sử dụng
 var modelCatalog = require("../models/model_catalog");
+var modelWishlist = require("../models/model_wishlist");
+var modelReview = require("../models/model_review");
+var modelReview = require("../models/model_review");
 
 var breadcrumb = "Tất cả sản phẩm";
 
@@ -11,6 +14,8 @@ router.get("/", async function (req, res) {
     let listPro = await modelProduct.list(); //cách gọi hàm trong model, để có dữ liệu từ db
     let listProPopular = await modelProduct.list();
     let listCat = await modelCatalog.list();
+
+    console.log("Product route - listCat:", listCat.length, listCat);
 
     const search = (req.query.search || "").trim();
     const priceRange = req.query.priceRange || "";
@@ -78,6 +83,21 @@ router.get("/", async function (req, res) {
         ? breadcrumbParts.join(" • ")
         : "Tất cả sản phẩm";
 
+    // Get user wishlist IDs for displaying heart states
+    let userWishlistIds = [];
+    if (req.session.User) {
+      try {
+        userWishlistIds = await modelWishlist.getUserWishlistIds(req.session.User.id);
+        console.log("Product route - User ID:", req.session.User.id);
+        console.log("Product route - userWishlistIds:", userWishlistIds);
+      } catch (error) {
+        console.log("Error getting wishlist IDs:", error);
+        userWishlistIds = [];
+      }
+    } else {
+      console.log("Product route - No user session");
+    }
+
     res.render("site/san-pham", {
       listPro: listPro,
       listCat: listCat,
@@ -85,6 +105,7 @@ router.get("/", async function (req, res) {
       breadcrumb,
       currentPriceRange: priceRange,
       currentSort: sortOrder,
+      userWishlistIds: userWishlistIds,
     });
   } catch (err) {
     console.error("Product list error:", err);
@@ -119,12 +140,41 @@ router.get("/:name", async function (req, res) {
   }
 
   let listComment = await modelProduct.getComment(newItemPro.idProduct);
+  
+  // Kiểm tra trạng thái đăng nhập và đã mua hàng
+  let canReview = false;
+  let hasReviewed = false;
+  let userPurchased = false;
+  
+  if (req.session.User) {
+    try {
+      userPurchased = await modelReview.checkUserPurchased(req.session.User.id, newItemPro.idProduct);
+      hasReviewed = await modelReview.checkUserReviewed(req.session.User.id, newItemPro.idProduct);
+      canReview = userPurchased && !hasReviewed;
+    } catch (error) {
+      console.error('Error checking review status:', error);
+    }
+  }
+  
+  // Lấy danh sách sản phẩm yêu thích của user nếu đã đăng nhập
+  let userWishlistIds = [];
+  if (req.session.User) {
+    userWishlistIds = await modelWishlist.getUserWishlistIds(req.session.User.id);
+  }
+  
   res.render("site/chi-tiet-san-pham", {
     itemPro: newItemPro,
     listCat: listCat,
     listPro: listPro,
     listComment: listComment,
     breadcrumb,
+    userWishlistIds: userWishlistIds,
+    user: req.session.User,
+    wishlistCount: req.session.wishlistCount || 0,
+    cartCount: req.session.cartCount || 0,
+    canReview: canReview,
+    hasReviewed: hasReviewed,
+    userPurchased: userPurchased
   });
 });
 
@@ -152,26 +202,64 @@ router.get("/api/comment/:id", async function (req, res) {
 });
 router.post("/comment/createcomment", async function (req, res) {
   let rating = req.body.star;
-  let ten = req.body.ten;
-  let email = req.body.email;
   let content = req.body.content;
   let idProduct = req.body.idProduct;
-  let date = new Date();
-
-  let data = {
-    ten: ten,
-    email: email,
-    content: content,
-    idProduct: idProduct,
-    rating: rating,
-    date: date,
-  };
-
-  console.log(data);
-  let query = await modelProduct.createComment(data);
   let nameProduct = req.body.nameProduct;
-  newName = replaceNameProduct(nameProduct).toLowerCase();
-  res.redirect(`/san-pham/${newName}`);
+  
+  // Kiểm tra đăng nhập
+  if (!req.session.User) {
+    return res.json({
+      success: false,
+      message: "Bạn cần đăng nhập để đánh giá sản phẩm!"
+    });
+  }
+  
+  const idUser = req.session.User.id;
+  const ten = req.session.User.ho + ' ' + req.session.User.ten;
+  const email = req.session.User.email;
+  
+  try {
+    // Kiểm tra đã mua hàng
+    const userPurchased = await modelReview.checkUserPurchased(idUser, idProduct);
+    if (!userPurchased) {
+      return res.json({
+        success: false,
+        message: "Bạn cần mua sản phẩm này trước khi đánh giá!"
+      });
+    }
+    
+    // Kiểm tra đã đánh giá chưa
+    const hasReviewed = await modelReview.checkUserReviewed(idUser, idProduct);
+    if (hasReviewed) {
+      return res.json({
+        success: false,
+        message: "Bạn đã đánh giá sản phẩm này rồi!"
+      });
+    }
+    
+    // Thêm đánh giá
+    const reviewData = {
+      idUser: idUser,
+      idProduct: idProduct,
+      content: content,
+      rating: rating,
+      ten: ten,
+      email: email
+    };
+    
+    await modelReview.addReview(reviewData);
+    
+    // Chuyển hướng về trang sản phẩm
+    const newName = replaceNameProduct(nameProduct).toLowerCase();
+    res.redirect(`/san-pham/${newName}#reviews`);
+    
+  } catch (error) {
+    console.error('Error creating review:', error);
+    res.json({
+      success: false,
+      message: "Có lỗi xảy ra khi đánh giá. Vui lòng thử lại!"
+    });
+  }
 });
 
 function xoa_dau(str) {
