@@ -59,6 +59,17 @@ exports.isInWishlist = (idUser, idProduct) => {
     });
 };
 
+// Get wishlist product IDs for a user
+exports.getUserWishlistIds = (idUser) => {
+    return new Promise((resolve, reject) => {
+        const sql = "SELECT idProduct FROM wishlist WHERE idUser = ?";
+        db.query(sql, [idUser], (err, result) => {
+            if (err) return reject(err);
+            resolve(result.map(row => row.idProduct));
+        });
+    });
+};
+
 // Get wishlist count for a user
 exports.getWishlistCount = (idUser) => {
     return new Promise((resolve, reject) => {
