@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="utf-8" />
     <link rel="shortcut icon" href="/img/favicon.ico" />
@@ -37,6 +37,33 @@
 
     <!-- Template Stylesheet -->
     <link href="../css/style.css" rel="stylesheet" />
+    
+    <style>
+      .alert {
+        padding: 15px;
+        margin: 20px 0;
+        border: 1px solid transparent;
+        border-radius: 4px;
+      }
+      
+      .alert-warning {
+        color: #856404;
+        background-color: #fff3cd;
+        border-color: #ffeaa7;
+      }
+      
+      .alert-info {
+        color: #0c5460;
+        background-color: #d1ecf1;
+        border-color: #bee5eb;
+      }
+      
+      .alert-success {
+        color: #155724;
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+      }
+    </style>
   </head>
 
   <body>
@@ -265,10 +292,12 @@
                       </a>
                       <a
                         href="#"
-                        class="btn btn-outline-danger add-to-wishlist"
+                        class="btn btn-outline-danger add-to-wishlist<% if (userWishlistIds && userWishlistIds.includes(itemPro.idProduct)) { %> active<% } %>"
                         data-product-id="<%= itemPro.idProduct %>"
+                        <% if (userWishlistIds && userWishlistIds.includes(itemPro.idProduct)) { %>data-liked="true"<% } %>
+                        title="<% if (userWishlistIds && userWishlistIds.includes(itemPro.idProduct)) { %>Bỏ thích<% } else { %>Yêu thích<% } %>"
                       >
-                        <i class="fa fa-heart-o"></i>Yêu thích
+                        <i class="<% if (userWishlistIds && userWishlistIds.includes(itemPro.idProduct)) { %>fas<% } else { %>far<% } %> fa-heart"></i>Yêu thích
                       </a>
                     </div>
                   </div>
@@ -335,82 +364,89 @@
                       <p><%=comment.content%></p>
                     </div>
                     <% } %>
-                    <form
-                      action="/san-pham/comment/createcomment"
-                      method="post"
-                    >
-                      <div class="reviews-submit">
-                        <div class="field">
-                          <h4>Viết đánh giá của bạn:</h4>
-                          <div class="control">
-                            <div class="rating">
-                              <input
-                                type="radio"
-                                name="star"
-                                id="star1"
-                                value="5"
-                              /><label for="star1"> </label>
-                              <input
-                                type="radio"
-                                name="star"
-                                id="star2"
-                                value="4"
-                              /><label for="star2"> </label>
-                              <input
-                                type="radio"
-                                name="star"
-                                id="star3"
-                                value="3"
-                              /><label for="star3"> </label>
-                              <input
-                                type="radio"
-                                name="star"
-                                id="star4"
-                                value="2"
-                              /><label for="star4"> </label>
-                              <input
-                                type="radio"
-                                name="star"
-                                id="star5"
-                                value="1"
-                              /><label for="star5"> </label>
+                    
+                    <!-- Phần đánh giá -->
+                    <div class="reviews-submit">
+                      <% if (!user) { %>
+                        <div class="alert alert-warning">
+                          <h4>Bạn cần đăng nhập để đánh giá</h4>
+                          <p>Vui lòng <a href="/users/dang-nhap" class="btn btn-primary btn-sm">Đăng nhập</a> để có thể đánh giá sản phẩm này.</p>
+                        </div>
+                      <% } else if (!userPurchased) { %>
+                        <div class="alert alert-info">
+                          <h4>Bạn cần mua sản phẩm để đánh giá</h4>
+                          <p>Chỉ những khách hàng đã mua sản phẩm này mới có thể đánh giá.</p>
+                        </div>
+                      <% } else if (hasReviewed) { %>
+                        <div class="alert alert-success">
+                          <h4>Cảm ơn bạn đã đánh giá!</h4>
+                          <p>Bạn đã đánh giá sản phẩm này rồi. Mỗi khách hàng chỉ có thể đánh giá một lần.</p>
+                        </div>
+                      <% } else if (canReview) { %>
+                        <form action="/san-pham/comment/createcomment" method="post">
+                          <div class="field">
+                            <h4>Viết đánh giá của bạn:</h4>
+                            <div class="control">
+                              <div class="rating">
+                                <input
+                                  type="radio"
+                                  name="star"
+                                  id="star1"
+                                  value="5"
+                                  required
+                                /><label for="star1"> </label>
+                                <input
+                                  type="radio"
+                                  name="star"
+                                  id="star2"
+                                  value="4"
+                                /><label for="star2"> </label>
+                                <input
+                                  type="radio"
+                                  name="star"
+                                  id="star3"
+                                  value="3"
+                                /><label for="star3"> </label>
+                                <input
+                                  type="radio"
+                                  name="star"
+                                  id="star4"
+                                  value="2"
+                                /><label for="star4"> </label>
+                                <input
+                                  type="radio"
+                                  name="star"
+                                  id="star5"
+                                  value="1"
+                                /><label for="star5"> </label>
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div class="row form clearfix">
-                          <div class="col-sm-6">
-                            <input name="ten" type="text" placeholder="Tên" />
-                          </div>
-                          <div class="col-sm-6">
+                          <div class="row form clearfix">
+                            <div class="col-sm-12">
+                              <textarea
+                                name="content"
+                                placeholder="Viết đánh giá của bạn về sản phẩm..."
+                                required
+                              ></textarea>
+                            </div>
                             <input
-                              name="email"
-                              type="email"
-                              placeholder="Email"
+                              type="hidden"
+                              name="idProduct"
+                              value="<%=itemPro.idProduct%>"
                             />
+                            <input
+                              type="hidden"
+                              name="nameProduct"
+                              value="<%=itemPro.nameProduct%>"
+                            />
+                            <div class="col-sm-12">
+                              <button type="submit" class="btn btn-primary">Gửi đánh giá</button>
+                            </div>
                           </div>
-                          <div class="col-sm-12">
-                            <textarea
-                              name="content"
-                              placeholder="Đánh giá..."
-                            ></textarea>
-                          </div>
-                          <input
-                            type="hidden"
-                            name="idProduct"
-                            value="<%=itemPro.idProduct%>"
-                          />
-                          <input
-                            type="hidden"
-                            name="nameProduct"
-                            value="<%=itemPro.nameProduct%>"
-                          />
-                          <div class="col-sm-12">
-                            <button>Gửi</button>
-                          </div>
-                        </div>
-                      </div>
-                    </form>
+                        </form>
+                      <% } %>
                   </div>
                 </div>
               </div>
@@ -460,7 +496,7 @@
                           href="#"
                           class="add-to-wishlist"
                           data-product-id="<%=product.idProduct%>"
-                          ><i class="fa fa-heart"></i
+                          ><i class="<% if (userWishlistIds && userWishlistIds.includes(product.idProduct)) { %>fas<% } else { %>far<% } %> fa-heart"></i
                         ></a>
                         <a href="/san-pham/<%= slug(product.nameProduct) %>"
                           ><i class="fa fa-search"></i
@@ -561,21 +597,7 @@
               </ul>
             </div>
 
-            <div class="sidebar-widget tag">
-              <h2 class="title">Tags Cloud</h2>
-              <a href="#">Lorem ipsum</a>
-              <a href="#">Vivamus</a>
-              <a href="#">Phasellus</a>
-              <a href="#">pulvinar</a>
-              <a href="#">Curabitur</a>
-              <a href="#">Fusce</a>
-              <a href="#">Sem quis</a>
-              <a href="#">Mollis metus</a>
-              <a href="#">Sit amet</a>
-              <a href="#">Vel posuere</a>
-              <a href="#">orci luctus</a>
-              <a href="#">Nam lorem</a>
-            </div>
+
           </div>
           <!-- Side Bar End -->
         </div>
@@ -583,20 +605,7 @@
     </div>
     <!-- Product Detail End -->
 
-    <!-- Brand Start -->
-    <div class="brand">
-      <div class="container-fluid">
-        <div class="brand-slider">
-          <div class="brand-item"><img src="../img/brand-1.png" alt="" /></div>
-          <div class="brand-item"><img src="../img/brand-2.png" alt="" /></div>
-          <div class="brand-item"><img src="../img/brand-3.png" alt="" /></div>
-          <div class="brand-item"><img src="../img/brand-4.png" alt="" /></div>
-          <div class="brand-item"><img src="../img/brand-5.png" alt="" /></div>
-          <div class="brand-item"><img src="../img/brand-6.png" alt="" /></div>
-        </div>
-      </div>
-    </div>
-    <!-- Brand End -->
+
 
     <!-- Footer Start -->
     <div class="footer">
@@ -625,13 +634,8 @@
                   <a href="https://www.linkedin.com/in/huy-tran-57777b202/"
                     ><i class="fab fa-linkedin-in"></i
                   ></a>
-                  <a href="https://www.instagram.com/huy_jr18"
-                    ><i class="fab fa-instagram"></i
-                  ></a>
-                  <a
-                    href="https://www.youtube.com/channel/UCctcteJFmH4Wxc8npHW9Cog"
-                    ><i class="fab fa-youtube"></i
-                  ></a>
+                  <a href="#"><i class="fab fa-instagram"></i></a>
+                  <a href="#"><i class="fab fa-youtube"></i></a>
                 </div>
               </div>
             </div>
