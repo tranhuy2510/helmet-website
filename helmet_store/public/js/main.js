@@ -6,14 +6,30 @@
     function toggleNavbarMethod() {
       if ($(window).width() > 768) {
         $(".navbar .dropdown")
-          .on("mouseover", function () {
-            $(".dropdown-toggle", this).trigger("click");
+          .on("mouseenter", function () {
+            const $dropdown = $(this);
+            const $toggle = $(".dropdown-toggle", this);
+            
+            // Only open if not already open
+            if (!$dropdown.hasClass("show")) {
+              $toggle.trigger("click");
+            }
           })
-          .on("mouseout", function () {
-            $(".dropdown-toggle", this).trigger("click").blur();
+          .on("mouseleave", function () {
+            const $dropdown = $(this);
+            const $toggle = $(".dropdown-toggle", this);
+            
+            // Add delay to prevent flickering when moving between dropdown and menu
+            setTimeout(() => {
+              if (!$dropdown.is(":hover")) {
+                if ($dropdown.hasClass("show")) {
+                  $toggle.trigger("click");
+                }
+              }
+            }, 150);
           });
       } else {
-        $(".navbar .dropdown").off("mouseover").off("mouseout");
+        $(".navbar .dropdown").off("mouseenter").off("mouseleave");
       }
     }
     toggleNavbarMethod();
@@ -193,8 +209,16 @@
     slidesToScroll: 1,
   });
 
-  // Quantity
-  $(".qty button").on("click", function () {
+  // Quantity - loại trừ wishlist buttons để tránh conflict
+  $(".qty button:not(.wishlist-btn)").on("click", function () {
+    // Skip nếu đang ở trang wishlist hoặc button có class wishlist-btn
+    if (
+      window.location.pathname === "/wishlist" ||
+      $(this).hasClass("wishlist-btn")
+    ) {
+      return;
+    }
+
     var $button = $(this);
     var oldValue = $button.parent().find("input").val();
     if ($button.hasClass("btn-plus")) {
@@ -308,9 +332,31 @@ $(document).ready(function () {
     }
   });
 
+  // Move from wishlist to cart
+  $(document).on("click", ".move-to-cart", function (e) {
+    e.preventDefault();
+    var productId = $(this).data("product-id");
+
+    // Get quantity from the wishlist quantity input if available
+    var $qtyInput = $("#qty-" + productId);
+    var quantity = $qtyInput.length
+      ? parseInt($qtyInput.val()) || 1
+      : $(this).data("quantity") || 1;
+    var size = $(this).data("size") || "M";
+
+    if (!productId) {
+      showNotification("Không xác định được sản phẩm.", "error");
+      return;
+    }
+
+    moveToCart(productId, quantity, size);
+  });
+
   // Update cart and wishlist counters on page load
-  updateCartCounter();
-  updateWishlistCounter();
+  autoUpdateCounters();
+
+  // Auto refresh counters every 30 seconds for realtime sync
+  setInterval(autoUpdateCounters, 30000);
 });
 
 // Add to Cart function
@@ -358,13 +404,21 @@ function toggleWishlist(productId, $btn) {
     success: function (response) {
       if (response.success) {
         showNotification(response.message, "success");
+        // Realtime update wishlist counter
         updateWishlistCounter();
+        updateWishlistBadge(response.wishlistCount);
 
         // Update button appearance
         if (response.inWishlist) {
-          $btn.addClass("active").html('<i class="fa fa-heart"></i>');
+          // Sản phẩm đã thích - hiển thị trái tim đầy màu đỏ
+          $btn.addClass("active");
+          $btn.find("i").removeClass("far fa-heart").addClass("fas fa-heart");
+          $btn.attr("title", "Bỏ thích");
         } else {
-          $btn.removeClass("active").html('<i class="fa fa-heart-o"></i>');
+          // Bỏ thích - hiển thị trái tim rỗng
+          $btn.removeClass("active");
+          $btn.find("i").removeClass("fas fa-heart").addClass("far fa-heart");
+          $btn.attr("title", "Yêu thích");
         }
       } else {
         showNotification(response.message, "error");
@@ -410,7 +464,9 @@ function removeFromCart(cartId) {
     success: function (response) {
       if (response.success) {
         showNotification(response.message, "success");
+        // Realtime update cart counter
         updateCartCounter();
+        updateCartBadge(response.cartCount);
         location.reload(); // Reload to update page
       } else {
         showNotification(response.message, "error");
@@ -428,7 +484,10 @@ function updateCartCounter() {
     url: "/cart/count",
     method: "GET",
     success: function (response) {
-      $(".cart .btn span").text("(" + response.cartCount + ")");
+      updateCartBadge(response.cartCount);
+    },
+    error: function () {
+      console.log("Error updating cart counter");
     },
   });
 }
@@ -439,9 +498,100 @@ function updateWishlistCounter() {
     url: "/wishlist/count",
     method: "GET",
     success: function (response) {
-      $(".wishlist .btn span").text("(" + response.wishlistCount + ")");
+      updateWishlistBadge(response.wishlistCount);
+    },
+    error: function () {
+      console.log("Error updating wishlist counter");
     },
   });
+}
+
+// Universal functions to update badges realtime
+function updateCartBadge(count) {
+  // Update all cart badges on page with animation
+  var $badges = $(
+    '.cart .btn span, .cart span, a[href="/cart"] span, a[href*="cart"] span'
+  );
+
+  $badges.addClass("updated").text("(" + count + ")");
+
+  // Remove animation class after animation completes
+  setTimeout(function () {
+    $badges.removeClass("updated");
+  }, 600);
+
+  // Show realtime notification
+  showRealtimeUpdate("Giỏ hàng: " + count + " sản phẩm");
+}
+
+function updateWishlistBadge(count) {
+  // Update all wishlist badges on page with animation
+  var $badges = $(
+    '.wishlist .btn span, .wishlist span, a[href="/wishlist"] span, a[href*="wishlist"] span'
+  );
+
+  $badges.addClass("updated").text("(" + count + ")");
+
+  // Remove animation class after animation completes
+  setTimeout(function () {
+    $badges.removeClass("updated");
+  }, 600);
+
+  // Show realtime notification
+  showRealtimeUpdate("Yêu thích: " + count + " sản phẩm");
+}
+
+// Move from wishlist to cart function
+function moveToCart(productId, quantity, size) {
+  $.ajax({
+    url: "/wishlist/move-to-cart",
+    method: "POST",
+    data: {
+      idProduct: productId,
+      quantity: quantity || 1,
+      size: size || "M",
+    },
+    success: function (response) {
+      if (response.success) {
+        showNotification(response.message, "success");
+        // Realtime update both counters
+        updateCartBadge(response.cartCount);
+        updateWishlistBadge(response.wishlistCount);
+
+        // Reload page to update lists
+        setTimeout(function () {
+          location.reload();
+        }, 1000);
+      } else {
+        showNotification(response.message, "error");
+      }
+    },
+    error: function () {
+      showNotification("Lỗi khi chuyển sản phẩm", "error");
+    },
+  });
+}
+
+// Show realtime update notification (smaller, less intrusive)
+function showRealtimeUpdate(message) {
+  // Remove existing realtime notifications
+  $(".realtime-update").remove();
+
+  var notification = $('<div class="realtime-update">' + message + "</div>");
+  $("body").append(notification);
+
+  // Auto remove after 2 seconds
+  setTimeout(function () {
+    notification.fadeOut(function () {
+      $(this).remove();
+    });
+  }, 2000);
+}
+
+// Auto update counters on page load and every 30 seconds
+function autoUpdateCounters() {
+  updateCartCounter();
+  updateWishlistCounter();
 }
 
 // Show Notification
