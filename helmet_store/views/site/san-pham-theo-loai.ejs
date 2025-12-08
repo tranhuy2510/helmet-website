@@ -146,8 +146,10 @@
           </div>
           <div class="col-md-6">
             <div class="search">
-              <input type="text" placeholder="Search" />
-              <button><i class="fa fa-search"></i></button>
+              <form id="headerSearchForm" action="" method="get" style="display: flex; width: 100%;">
+                <input id="headerSearch" name="search" type="text" placeholder="Search" style="flex: 1;" />
+                <button type="submit" id="headerSearchBtn"><i class="fa fa-search"></i></button>
+              </form>
             </div>
           </div>
           <div class="col-md-3">
@@ -192,7 +194,7 @@
                       <div class="product-search">
                         <input
                           id="myInput"
-                          type="email"
+                          type="text"
                           placeholder="Tìm kiếm tên sản phẩm"
                         />
                         <button><i class="fa fa-search"></i></button>
@@ -245,6 +247,15 @@
               <!-- danh sách sản phẩm theo loại đc nhúng tại đây -->
               <div class="col-md-12">
                 <div id="myTable" class="row"></div>
+              </div>
+              
+              <!-- Thông báo không tìm thấy sản phẩm -->
+              <div class="col-md-12">
+                <div id="noResultMessage" class="text-center" style="display: none; padding: 40px 0;">
+                  <i class="fa fa-search" style="font-size: 48px; color: #ccc; margin-bottom: 20px; display: block;"></i>
+                  <h3 style="color: #666; margin: 20px 0;">Không tìm thấy sản phẩm phù hợp</h3>
+                  <p style="color: #999; margin: 10px 0;">Vui lòng thử lại với từ khóa khác</p>
+                </div>
               </div>
             </div>
 
@@ -531,10 +542,11 @@
 <script>
   const xuLyDuLieu = (data, id) => {
     const sp_theo_loai = document.getElementById("myTable");
+    console.log("=== xuLyDuLieu called ===");
+    console.log("Total products to render:", data.length);
     let str = ``;
     for (i in data) {
       let product = data[i];
-      console.log(product);
       let newName = replaceNameProduct(product.nameProduct).toLowerCase();
 
       str += `<div class="col-md-4">
@@ -588,21 +600,85 @@
     }
     sp_theo_loai.innerHTML += str;
 
+    console.log("Products rendered successfully");
+    console.log("Total .col-md-4 elements:", $("#myTable .col-md-4").length);
+
     // Reinitialize search/filter after data is loaded
     setTimeout(function () {
+      console.log("Initializing product filters...");
       initializeProductFilters();
     }, 100);
   };
 
   function initializeProductFilters() {
-    // Reattach event listeners for dynamically loaded content
+    // Function để kiểm tra và hiển thị thông báo
+    function checkAndShowNoResultMessage() {
+      var visibleProducts = $("#myTable .col-md-4:visible").length;
+      console.log("Visible products:", visibleProducts);
+      
+      if (visibleProducts === 0) {
+        console.log("Showing no result message");
+        $("#noResultMessage").show();
+      } else {
+        console.log("Hiding no result message");
+        $("#noResultMessage").hide();
+      }
+    }
+
+    // Tìm kiếm sản phẩm trong trang danh mục (myInput)
     $("#myInput")
       .off("keyup")
       .on("keyup", function () {
-        var value = $(this).val().toLowerCase();
+        var value = $(this).val().toLowerCase().trim();
+        console.log("Searching for:", value);
+        
         $("#myTable .col-md-4").filter(function () {
-          $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+          var productText = $(this).text().toLowerCase();
+          var isMatch = value === '' || productText.indexOf(value) > -1;
+          $(this).toggle(isMatch);
         });
+        
+        checkAndShowNoResultMessage();
+      });
+
+    // Tìm kiếm sản phẩm từ header search
+    $("#headerSearch")
+      .off("keyup")
+      .on("keyup", function () {
+        var value = $(this).val().toLowerCase().trim();
+        console.log("Header search:", value);
+        
+        $("#myTable .col-md-4").filter(function () {
+          var productText = $(this).text().toLowerCase();
+          var isMatch = value === '' || productText.indexOf(value) > -1;
+          $(this).toggle(isMatch);
+        });
+        
+        checkAndShowNoResultMessage();
+      });
+
+    // Xử lý click nút search trên header
+    $("#headerSearchBtn")
+      .off("click")
+      .on("click", function (e) {
+        e.preventDefault();
+        var value = $("#headerSearch").val().toLowerCase().trim();
+        console.log("Header button clicked, searching:", value);
+        
+        if (value === '') {
+          // Nếu rỗng, hiển thị tất cả sản phẩm
+          $("#myTable .col-md-4").show();
+          $("#noResultMessage").hide();
+          return;
+        }
+        
+        $("#myTable .col-md-4").filter(function () {
+          var productText = $(this).text().toLowerCase();
+          var isMatch = productText.indexOf(value) > -1;
+          $(this).toggle(isMatch);
+        });
+        
+        checkAndShowNoResultMessage();
       });
 
     console.log(
@@ -624,6 +700,51 @@
     window.userWishlistIds = userWishlistIds;
     
     xuLyDuLieu(listPro);
+    
+    // Kiểm tra URL có query parameter 'search' không
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchQuery = urlParams.get('search');
+    
+    if (searchQuery) {
+      console.log('Search query from URL:', searchQuery);
+      // Đợi sản phẩm load xong rồi mới search
+      setTimeout(function() {
+        console.log("=== Processing URL Search ===");
+        $('#headerSearch').val(searchQuery);
+        $('#myInput').val(searchQuery);
+        
+        // Thực hiện tìm kiếm
+        var value = searchQuery.toLowerCase().trim();
+        console.log('Search term:', value);
+        console.log('Total products before filter:', $("#myTable .col-md-4").length);
+        
+        var matchCount = 0;
+        $("#myTable .col-md-4").filter(function () {
+          var productText = $(this).text().toLowerCase();
+          var isMatch = productText.indexOf(value) > -1;
+          $(this).toggle(isMatch);
+          if (isMatch) matchCount++;
+        });
+        
+        console.log('Matching products:', matchCount);
+        
+        // Kiểm tra kết quả
+        setTimeout(function() {
+          var visibleProducts = $("#myTable .col-md-4:visible").length;
+          console.log('Final visible products:', visibleProducts);
+          
+          if (visibleProducts === 0) {
+            console.log('✓ No products found - SHOWING MESSAGE');
+            $("#noResultMessage").css("display", "block").show();
+            console.log('Message display style:', $("#noResultMessage").css("display"));
+            console.log('Message is visible:', $("#noResultMessage").is(":visible"));
+          } else {
+            console.log('✓ Products found - hiding message');
+            $("#noResultMessage").hide();
+          }
+        }, 100);
+      }, 300);
+    }
   });
 
   // Keep the old fetch logic as fallback
@@ -679,12 +800,91 @@
   var filterFunction;
 
   $(document).ready(function () {
-    // Search functionality
+    console.log("=== Document Ready ===");
+    console.log("Initial products in #myTable:", $("#myTable .col-md-4").length);
+    console.log("noResultMessage element exists:", $("#noResultMessage").length > 0);
+    
+    // Function để kiểm tra và hiển thị thông báo không tìm thấy
+    function checkNoResults() {
+      var totalProducts = $("#myTable .col-md-4").length;
+      var visibleProducts = $("#myTable .col-md-4:visible").length;
+      console.log("=== Check No Results ===");
+      console.log("Total products:", totalProducts);
+      console.log("Visible products:", visibleProducts);
+      
+      if (totalProducts === 0) {
+        console.log("WARNING: No products loaded yet!");
+        return;
+      }
+      
+      if (visibleProducts === 0) {
+        console.log("✓ Showing no result message");
+        $("#noResultMessage").css("display", "block").show();
+      } else {
+        console.log("✓ Hiding no result message");
+        $("#noResultMessage").hide();
+      }
+    }
+
+    // Search functionality cho ô tìm kiếm trong trang
     $("#myInput").on("keyup", function () {
-      var value = $(this).val().toLowerCase();
+      var value = $(this).val().toLowerCase().trim();
+      console.log("=== myInput Search ===");
+      console.log("Search value:", value);
+      
       $("#myTable .col-md-4").filter(function () {
-        $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+        var isMatch = value === '' || $(this).text().toLowerCase().indexOf(value) > -1;
+        $(this).toggle(isMatch);
       });
+      
+      setTimeout(checkNoResults, 50);
+    });
+
+    // Search functionality cho ô tìm kiếm trên header
+    $("#headerSearch").on("keyup", function () {
+      var value = $(this).val().toLowerCase().trim();
+      console.log("=== headerSearch Search ===");
+      console.log("Search value:", value);
+      
+      $("#myTable .col-md-4").filter(function () {
+        var isMatch = value === '' || $(this).text().toLowerCase().indexOf(value) > -1;
+        $(this).toggle(isMatch);
+      });
+      
+      setTimeout(checkNoResults, 50);
+    });
+
+    // Xử lý submit form search trên header
+    $("#headerSearchForm").on("submit", function (e) {
+      e.preventDefault();
+      var value = $("#headerSearch").val().toLowerCase().trim();
+      console.log("=== headerSearchForm Submit ===");
+      console.log("Search value:", value);
+      
+      if (value === '') {
+        $("#myTable .col-md-4").show();
+        $("#noResultMessage").hide();
+        // Xóa query parameter khỏi URL
+        window.history.pushState({}, '', window.location.pathname);
+        return;
+      }
+      
+      // Cập nhật URL với query parameter
+      const newUrl = window.location.pathname + '?search=' + encodeURIComponent(value);
+      window.history.pushState({}, '', newUrl);
+      
+      $("#myTable .col-md-4").filter(function () {
+        var isMatch = $(this).text().toLowerCase().indexOf(value) > -1;
+        $(this).toggle(isMatch);
+      });
+      
+      setTimeout(checkNoResults, 50);
+    });
+
+    // Xử lý click nút search trên header (fallback)
+    $("#headerSearchBtn").on("click", function (e) {
+      e.preventDefault();
+      $("#headerSearchForm").submit();
     });
 
     // Sort functionality

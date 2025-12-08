@@ -347,6 +347,15 @@
                   <% } %>
                 </div>
               </div>
+              
+              <!-- Thông báo không tìm thấy sản phẩm -->
+              <div class="col-md-12">
+                <div id="noResultMessage" class="text-center" style="display: none; padding: 40px 0;">
+                  <i class="fa fa-search" style="font-size: 48px; color: #ccc; margin-bottom: 20px; display: block;"></i>
+                  <h3 style="color: #666; margin: 20px 0;">Không tìm thấy sản phẩm phù hợp</h3>
+                  <p style="color: #999; margin: 10px 0;">Vui lòng thử lại với từ khóa khác</p>
+                </div>
+              </div>
             </div>
 
             <!-- Pagination Start -->
@@ -602,13 +611,72 @@
 </html>
 
 <script>
-  // Search Product
+  // Search Product with no result message
   $(document).ready(function () {
-    $("#myInput").on("keyup", function () {
-      var value = $(this).val().toLowerCase();
-      $("#myTable .col-md-4").filter(function () {
-        $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+    // Đợi DOM render xong hoàn toàn
+    setTimeout(function() {
+      console.log("=== san-pham.ejs Initialized ===");
+      console.log("Total products:", $("#myTable .col-md-4").length);
+      console.log("noResultMessage exists:", $("#noResultMessage").length > 0);
+      
+      // Function để kiểm tra và hiển thị thông báo
+      function checkNoResults() {
+        var totalProducts = $("#myTable .col-md-4").length;
+        var visibleProducts = $("#myTable .col-md-4:visible").length;
+        console.log("=== Check No Results ===");
+        console.log("Total:", totalProducts);
+        console.log("Visible:", visibleProducts);
+        
+        if (totalProducts === 0) {
+          console.log("WARNING: No products in page!");
+          $("#noResultMessage").css("display", "block").show();
+          return;
+        }
+        
+        if (visibleProducts === 0) {
+          console.log("✓ SHOWING no result message");
+          $("#noResultMessage").css("display", "block").show();
+        } else {
+          console.log("✓ Hiding no result message");
+          $("#noResultMessage").hide();
+        }
+      }
+      
+      // Search functionality cho ô tìm kiếm trên
+      $(".bottom-bar .search input").on("keyup", function () {
+        var value = $(this).val().toLowerCase().trim();
+        console.log("=== Search triggered (bottom-bar) ===");
+        console.log("Search value:", value);
+        
+        $("#myTable .col-md-4").filter(function () {
+          var isMatch = value === '' || $(this).text().toLowerCase().indexOf(value) > -1;
+          $(this).toggle(isMatch);
+        });
+        
+        setTimeout(checkNoResults, 50);
       });
-    });
+      
+      // Search functionality cho ô tìm kiếm trong product-view-top
+      $("#myInput").on("keyup", function () {
+        var value = $(this).val().toLowerCase().trim();
+        console.log("=== Search triggered (#myInput) ===");
+        console.log("Search value:", value);
+        
+        $("#myTable .col-md-4").filter(function () {
+          var isMatch = value === '' || $(this).text().toLowerCase().indexOf(value) > -1;
+          $(this).toggle(isMatch);
+        });
+        
+        setTimeout(checkNoResults, 50);
+      });
+      
+      // Kiểm tra URL có search parameter không
+      var urlParams = new URLSearchParams(window.location.search);
+      var searchParam = urlParams.get('search');
+      if (searchParam) {
+        $("#myInput").val(searchParam);
+        $("#myInput").trigger("keyup");
+      }
+    }, 100);
   });
 </script>
