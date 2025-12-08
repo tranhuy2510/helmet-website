@@ -30,6 +30,53 @@
 
     <!-- Template Stylesheet -->
     <link href="../css/style.css" rel="stylesheet" />
+    
+    <!-- Custom Validation Styles -->
+    <style>
+      .invalid-feedback {
+        display: none;
+        color: #dc3545;
+        font-size: 0.875em;
+        margin-top: 0.25rem;
+      }
+      
+      .form-control.is-invalid {
+        border-color: #dc3545;
+        padding-right: calc(1.5em + 0.75rem);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23dc3545' viewBox='0 0 12 12'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+      }
+      
+      .form-control.is-invalid ~ .invalid-feedback {
+        display: block;
+      }
+      
+      .form-control.is-valid {
+        border-color: #28a745;
+        padding-right: calc(1.5em + 0.75rem);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+      }
+      
+      .alert {
+        border-radius: 0.25rem;
+        margin-bottom: 1rem;
+      }
+      
+      .alert-danger {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+      }
+      
+      .text-danger {
+        color: #dc3545 !important;
+      }
+    </style>
   </head>
 
   <body>
@@ -157,28 +204,47 @@
         <div class="row">
           <div class="col-lg-6 mx-auto">
             <div class="login-form">
-              <form action="/users/dang-nhap" method="post">
+              <!-- Hiển thị thông báo lỗi -->
+              <% if (typeof message !== 'undefined' && message) { %>
+              <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fa fa-exclamation-circle"></i> <%= message %>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <% } %>
+              
+              <form id="loginForm" action="/users/dang-nhap" method="post" novalidate>
                 <div class="row">
                   <legend class="text-center">Đăng nhập</legend>
                   <div class="col-md-6">
-                    <label for="username">Username</label>
+                    <label for="username">Username <span class="text-danger">*</span></label>
                     <input
                       id="username"
                       name="username"
                       class="form-control"
                       type="text"
-                      placeholder="Username"
+                      placeholder="Username hoặc Email"
+                      required
                     />
+                    <div class="invalid-feedback">
+                      Vui lòng nhập tên đăng nhập hoặc email
+                    </div>
                   </div>
                   <div class="col-md-6">
-                    <label for="password">Mật khẩu</label>
+                    <label for="password">Mật khẩu <span class="text-danger">*</span></label>
                     <input
                       id="password"
                       name="password"
                       class="form-control"
                       type="password"
                       placeholder="Mật khẩu"
+                      required
+                      minlength="6"
                     />
+                    <div class="invalid-feedback">
+                      Mật khẩu phải có ít nhất 6 ký tự
+                    </div>
                   </div>
                   <div class="col-md-12">
                     <div class="custom-control custom-checkbox">
@@ -188,7 +254,7 @@
                     </div>
                   </div>
                   <div class="col-md-12 text-center">
-                    <button class="btn">Đăng nhập</button>
+                    <button type="submit" class="btn">Đăng nhập</button>
                   </div>
                 </div>
               </form>
@@ -315,30 +381,50 @@
     <!-- Template Javascript -->
     <script src="../js/main.js"></script>
     <script>
-      document
-        .querySelector(".login-form form")
-        .addEventListener("submit", function (event) {
-          const username = document.getElementById("username").value.trim();
-          const password = document.getElementById("password").value.trim();
-          let errorMessage = "";
-
-          if (!username && !password) {
-            errorMessage = "Vui lòng nhập tài khoản và mật khẩu.";
-          } else if (!username) {
-            errorMessage = "Vui lòng nhập tài khoản.";
-          } else if (!password) {
-            errorMessage = "Vui lòng nhập mật khẩu.";
-          }
-
-          if (errorMessage) {
+      // Bootstrap form validation
+      (function() {
+        'use strict';
+        
+        // Fetch the form
+        var form = document.getElementById('loginForm');
+        
+        form.addEventListener('submit', function(event) {
+          // Validate inputs
+          var username = document.getElementById('username');
+          var password = document.getElementById('password');
+          
+          // Reset validation states
+          form.classList.remove('was-validated');
+          
+          // Check if form is valid
+          if (form.checkValidity() === false) {
             event.preventDefault();
-            alert(errorMessage);
+            event.stopPropagation();
+            form.classList.add('was-validated');
+            
+            // Show specific error messages
+            if (!username.value.trim()) {
+              username.classList.add('is-invalid');
+            }
+            if (!password.value.trim() || password.value.length < 6) {
+              password.classList.add('is-invalid');
+            }
+          } else {
+            // Form is valid, allow submission
+            form.classList.add('was-validated');
           }
+        }, false);
+        
+        // Remove invalid class on input
+        document.querySelectorAll('.form-control').forEach(function(input) {
+          input.addEventListener('input', function() {
+            if (this.value.trim()) {
+              this.classList.remove('is-invalid');
+              this.classList.add('is-valid');
+            }
+          });
         });
+      })();
     </script>
-
-    <% if (typeof message !== 'undefined' && message) { %>
-    <div class="alert alert-danger text-center"><%= message %></div>
-    <% } %>
   </body>
 </html>

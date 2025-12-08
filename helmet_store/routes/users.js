@@ -70,7 +70,7 @@ router.get("/tai-khoan", async function (req, res, next) {
   }
 });
 router.get("/dang-nhap", function (req, res, next) {
-  res.render("site/dang-nhap.ejs");
+  res.render("site/dang-nhap.ejs", { message: null });
 });
 router.post("/dang-nhap", function (req, res, next) {
   let u = req.body.username;
