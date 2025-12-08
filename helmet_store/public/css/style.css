@@ -2611,7 +2611,7 @@ h2 {
 /* Realtime notification styles */
 .realtime-update {
   position: fixed;
-  top: 80px;
+  top: 135px;
   right: 20px;
   z-index: 9998;
   background: linear-gradient(45deg, #ff6f61, #ff8a65);

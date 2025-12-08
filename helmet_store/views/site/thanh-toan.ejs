@@ -583,12 +583,16 @@
             subtotal += parseInt($(this).data('price'));
           });
 
-          let shipping = 30000;
+          let shipping = subtotal > 0 ? 30000 : 0;
           let total = subtotal + shipping;
 
           $('.subtotal-amount').text(subtotal.toLocaleString('vi-VN') + ' đ');
           $('.total-amount').text(total.toLocaleString('vi-VN') + ' đ');
+          $('.ship-cost span').text(shipping > 0 ? '30.000 đ' : '0 đ');
         }
+
+        // Gọi ngay khi load trang để tính đúng tổng từ items đã chọn
+        updateTotal();
 
         // Lắng nghe sự kiện thay đổi checkbox
         $('.item-checkbox').on('change', function() {

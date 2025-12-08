@@ -209,7 +209,6 @@
                           data-price="<%= item.priceProduct %>"
                           data-quantity="<%= item.quantity %>"
                           onchange="updateTotal()"
-                          checked
                         />
                       </td>
                       <td>
@@ -504,7 +503,7 @@
           subtotal += price * quantity;
         });
 
-        const shipping = 30000;
+        const shipping = itemCheckboxes.length > 0 ? 30000 : 0;
         const total = subtotal + shipping;
 
         // Cập nhật hiển thị
@@ -517,10 +516,12 @@
         const checkoutBtn = document.getElementById("checkoutBtn");
         if (checkoutBtn) {
           checkoutBtn.disabled = itemCheckboxes.length === 0;
+          checkoutBtn.classList.toggle('btn-secondary', itemCheckboxes.length === 0);
+          checkoutBtn.classList.toggle('btn-primary', itemCheckboxes.length > 0);
           checkoutBtn.textContent =
             itemCheckboxes.length === 0
               ? "Chọn sản phẩm để thanh toán"
-              : "Thanh Toán";
+              : "Thanh Toán (" + itemCheckboxes.length + " sản phẩm)";
         }
       }
 
