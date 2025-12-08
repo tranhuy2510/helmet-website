@@ -37,12 +37,37 @@ router.get("/thanh-toan", async function (req, res, next) {
     let cartItems = [];
     let cartTotal = 0;
     let cartCount = 0;
+    let wishlistCount = 0;
 
     if (req.session.User) {
       // Logged in user
-      cartItems = await modelCart.getCartItems(req.session.User.id);
-      cartTotal = await modelCart.getCartTotal(req.session.User.id);
-      cartCount = await modelCart.getCartCount(req.session.User.id);
+      const selectedItemsParam = req.query.items;
+      
+      if (selectedItemsParam) {
+        // Lấy chỉ các sản phẩm được chọn
+        const selectedCartIds = selectedItemsParam.split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
+        
+        if (selectedCartIds.length > 0) {
+          cartItems = await modelCart.getSelectedCartItems(req.session.User.id, selectedCartIds);
+          // Tính tổng từ các items được chọn
+          cartTotal = cartItems.reduce((sum, item) => sum + (item.priceProduct * item.quantity), 0);
+          cartCount = cartItems.length;
+        } else {
+          // Không có sản phẩm hợp lệ được chọn
+          return res.redirect("/cart?error=noitems");
+        }
+      } else {
+        // Không có items được chọn, redirect về giỏ hàng
+        return res.redirect("/cart?error=noselection");
+      }
+
+      // Get wishlist count
+      try {
+        wishlistCount = await modelWishlist.getWishlistCount(req.session.User.id);
+      } catch (error) {
+        console.log("Error getting wishlist count:", error);
+        wishlistCount = 0;
+      }
     } else {
       // Redirect to login if not logged in
       req.session.back = "/thanh-toan";
@@ -53,6 +78,7 @@ router.get("/thanh-toan", async function (req, res, next) {
       cartItems: cartItems,
       cartTotal: cartTotal,
       cartCount: cartCount,
+      wishlistCount: wishlistCount,
       user: req.session.User || null,
     });
   } catch (error) {
