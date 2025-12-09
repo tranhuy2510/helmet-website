@@ -119,10 +119,10 @@ router.get("/addnew", function (req, res, next) {
 });
 router.get("/:name", async function (req, res) {
   let name = req.params.name;
-  let listPro = await modelProduct.list();
+  let listProAll = await modelProduct.list();
   let listCat = await modelCatalog.list();
 
-  for (itemPro of listPro) {
+  for (itemPro of listProAll) {
     var newNamePro = itemPro.nameProduct;
     breadcrumb = newNamePro;
     newNamePro = replaceNameProduct(itemPro.nameProduct).toLowerCase();
@@ -161,6 +161,12 @@ router.get("/:name", async function (req, res) {
   if (req.session.User) {
     userWishlistIds = await modelWishlist.getUserWishlistIds(req.session.User.id);
   }
+  
+  // Giới hạn chỉ hiển thị 8 sản phẩm ngẫu nhiên để tránh slider quá lớn
+  let listPro = listProAll
+    .filter(p => p.idProduct !== newItemPro.idProduct) // Loại bỏ sản phẩm hiện tại
+    .sort(() => 0.5 - Math.random()) // Shuffle ngẫu nhiên
+    .slice(0, 8); // Chỉ lấy 8 sản phẩm
   
   res.render("site/chi-tiet-san-pham", {
     itemPro: newItemPro,

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th10 15, 2025 lúc 02:02 AM
+-- Thời gian đã tạo: Th12 09, 2025 lúc 01:34 PM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.2.12
 
@@ -36,15 +36,6 @@ CREATE TABLE `cart` (
   `createdAt` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Đang đổ dữ liệu cho bảng `cart`
---
-
-INSERT INTO `cart` (`idCart`, `idUser`, `idProduct`, `quantity`, `size`, `createdAt`) VALUES
-(9, 8, 3, 1, 'M', '2025-11-14 00:21:33'),
-(10, 8, 1, 6, 'M', '2025-11-14 02:09:19'),
-(11, 8, 2, 1, 'M', '2025-11-14 02:09:26');
-
 -- --------------------------------------------------------
 
 --
@@ -65,7 +56,7 @@ INSERT INTO `catalog` (`idCat`, `nameCat`) VALUES
 (2, 'Shoei'),
 (3, 'Arai'),
 (4, 'TORC'),
- (5, 'Yohe'),
+(5, 'Yohe'),
 (6, 'Kyt'),
 (7, 'Royal'),
 (8, 'LS2');
@@ -78,6 +69,7 @@ INSERT INTO `catalog` (`idCat`, `nameCat`) VALUES
 
 CREATE TABLE `comment` (
   `idComment` int(11) NOT NULL,
+  `idUser` int(11) DEFAULT NULL,
   `content` varchar(255) NOT NULL,
   `ten` varchar(50) NOT NULL,
   `email` varchar(50) NOT NULL,
@@ -90,14 +82,14 @@ CREATE TABLE `comment` (
 -- Đang đổ dữ liệu cho bảng `comment`
 --
 
-INSERT INTO `comment` (`idComment`, `content`, `ten`, `email`, `date`, `rating`, `idProduct`) VALUES
-(1, 'Nón đẹp', 'quoc huy', 'kenbi.njr@gmail.com', '2021-03-01 20:06:37', 5, 1),
-(2, 'Nón xịn quá', 'Trần Quốc Huy', 'huytqps11190@fpt.edu.vn', '2021-03-01 23:03:11', 3, 2),
-(3, 'asd', 'asd', 'kenbi.njr@gmail.cm', '2021-03-01 22:32:55', 5, 4),
-(4, 'Nón gì mắc vậy', 'Lê Gia Huy', 'lgh@gmail.com', '2021-03-01 22:41:28', 1, 3),
-(5, 'Nón shoei quá đẹp', 'Quốc Huy', 'kenbi.njr@gmail.cm', '2021-03-01 22:43:02', 5, 2),
-(6, 'Tôi thích màu xanh của nón <3 ', 'Biker', 'biker@gmail.com', '2021-03-01 23:34:15', 5, 28),
-(7, 'Nón xấu mà mắc quá', 'Biker', 'biker@gmail.com', '2021-03-01 23:34:54', 1, 25);
+INSERT INTO `comment` (`idComment`, `idUser`, `content`, `ten`, `email`, `date`, `rating`, `idProduct`) VALUES
+(1, NULL, 'Nón đẹp', 'quoc huy', 'kenbi.njr@gmail.com', '2021-03-01 20:06:37', 5, 1),
+(2, NULL, 'Nón xịn quá', 'Trần Quốc Huy', 'huytqps11190@fpt.edu.vn', '2021-03-01 23:03:11', 3, 2),
+(3, NULL, 'asd', 'asd', 'kenbi.njr@gmail.cm', '2021-03-01 22:32:55', 5, 4),
+(4, NULL, 'Nón gì mắc vậy', 'Lê Gia Huy', 'lgh@gmail.com', '2021-03-01 22:41:28', 1, 3),
+(5, NULL, 'Nón shoei quá đẹp', 'Quốc Huy', 'kenbi.njr@gmail.cm', '2021-03-01 22:43:02', 5, 2),
+(6, NULL, 'Tôi thích màu xanh của nón <3 ', 'Biker', 'biker@gmail.com', '2021-03-01 23:34:15', 5, 28),
+(7, NULL, 'Nón xấu mà mắc quá', 'Biker', 'biker@gmail.com', '2021-03-01 23:34:54', 1, 25);
 
 -- --------------------------------------------------------
 
@@ -115,12 +107,35 @@ CREATE TABLE `orders` (
   `customerPhone` varchar(20) NOT NULL,
   `paymentMethod` varchar(50) NOT NULL DEFAULT 'COD',
   `paymentStatus` varchar(20) DEFAULT 'unpaid',
-  `orderNotes` text,
-  `estimatedDelivery` datetime,
-  `deliveredAt` datetime,
+  `transactionNo` varchar(50) DEFAULT NULL COMMENT 'Mã giao dịch VNPay',
+  `orderNotes` text DEFAULT NULL,
+  `estimatedDelivery` datetime DEFAULT NULL,
+  `deliveredAt` datetime DEFAULT NULL,
   `createdAt` timestamp NOT NULL DEFAULT current_timestamp(),
   `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Bảng đơn hàng - Hỗ trợ thanh toán VNPay';
+
+--
+-- Đang đổ dữ liệu cho bảng `orders`
+--
+
+INSERT INTO `orders` (`idOrder`, `idUser`, `totalAmount`, `status`, `shippingAddress`, `customerName`, `customerPhone`, `paymentMethod`, `paymentStatus`, `transactionNo`, `orderNotes`, `estimatedDelivery`, `deliveredAt`, `createdAt`, `updatedAt`) VALUES
+(1, 8, 4600000.00, 'delivered', 'Ha Noi', 'Trần Huy', '0123456789', 'COD', 'paid', NULL, '', NULL, '2025-12-09 15:39:07', '2025-11-30 19:17:23', '2025-12-09 08:39:07'),
+(2, 8, 8000000.00, 'cancelled', 'Ha Noi', 'Trần Huy', '0123456789', 'COD', 'unpaid', NULL, '\nLý do hủy: Thay đổi ý định mua hàng', NULL, NULL, '2025-11-30 20:09:14', '2025-11-30 20:11:52'),
+(3, 8, 8000000.00, 'delivered', 'Ha Noi', 'Trần Huy', '0123456789', 'COD', 'paid', NULL, '', NULL, '2025-12-09 15:39:15', '2025-12-07 15:37:59', '2025-12-09 08:39:15'),
+(4, 8, 17830000.00, 'pending', 'Trần Huy, 0323555267, Ha Noi 25A, Phường Mỹ Đình 1, Nam Từ Liêm, Hà Nội', '', '', 'VNPAY', 'unpaid', NULL, NULL, NULL, NULL, '2025-12-09 09:05:58', '2025-12-09 09:05:58'),
+(5, 8, 17830000.00, 'pending', 'Trần Huy, 0123456789, Ha Noi', '', '', 'VNPAY', 'unpaid', NULL, NULL, NULL, NULL, '2025-12-09 09:06:42', '2025-12-09 09:06:42'),
+(6, 8, 17830000.00, 'pending', 'Trần Huy, 0323555267, Ha Noi 25A, Phường Mỹ Đình 1, Nam Từ Liêm, Hà Nội', '', '', 'VNPAY', 'unpaid', NULL, NULL, NULL, NULL, '2025-12-09 09:09:04', '2025-12-09 09:09:04'),
+(7, 8, 17830000.00, 'pending', 'Trần Huy, 0123456789, Ha Noi', '', '', 'VNPAY', 'unpaid', NULL, NULL, NULL, NULL, '2025-12-09 09:12:17', '2025-12-09 09:12:17'),
+(8, 8, 17830000.00, 'pending', 'Trần Huy, 0123456789, Ha Noi', '', '', 'VNPAY', 'unpaid', NULL, NULL, NULL, NULL, '2025-12-09 09:18:33', '2025-12-09 09:18:33'),
+(9, 8, 17830000.00, 'pending', 'Trần Huy, 0323555267, Ha Noi 25A, Phường Mỹ Đình 1, Nam Từ Liêm, Hà Nội', '', '', 'VNPAY', 'unpaid', NULL, NULL, NULL, NULL, '2025-12-09 09:19:24', '2025-12-09 09:19:24'),
+(10, 8, 17830000.00, 'pending', 'Trần Huy, 0323555267, Ha Noi 25A, Phường Mỹ Đình 1, Nam Từ Liêm, Hà Nội', '', '', 'VNPAY', 'unpaid', NULL, NULL, NULL, NULL, '2025-12-09 09:25:52', '2025-12-09 09:25:52'),
+(11, 8, 17830000.00, 'pending', 'Trần Huy, 0323555267, Ha Noi 25A, Phường Mỹ Đình 1, Nam Từ Liêm, Hà Nội', '', '', 'VNPAY', 'unpaid', NULL, NULL, NULL, NULL, '2025-12-09 09:28:08', '2025-12-09 09:28:08'),
+(12, 8, 1430000.00, 'pending', 'Trần Huy, 0323555267, Ha Noi 25A, Phường Mỹ Đình 1, Nam Từ Liêm, Hà Nội', '', '', 'VNPAY', 'unpaid', NULL, NULL, NULL, NULL, '2025-12-09 09:29:40', '2025-12-09 09:29:40'),
+(13, 8, 1430000.00, 'FAILED', 'Trần Huy, 0123456789, Ha Noi', '', '', 'VNPAY', 'failed', NULL, NULL, NULL, NULL, '2025-12-09 09:33:34', '2025-12-09 09:34:06'),
+(14, 8, 1430000.00, 'pending', 'Trần Huy, 0123456789, Ha Noi', '', '', 'VNPAY', 'unpaid', NULL, NULL, NULL, NULL, '2025-12-09 09:34:29', '2025-12-09 09:34:29'),
+(15, 8, 17830000.00, 'pending', 'Trần Huy, 0123456789, Ha Noi', '', '', 'VNPAY', 'unpaid', NULL, NULL, NULL, NULL, '2025-12-09 09:35:23', '2025-12-09 09:35:23'),
+(16, 8, 1430000.00, 'PAID', 'Trần Huy, 0123456789, Ha Noi', '', '', 'VNPAY', 'paid', '15329977', NULL, NULL, NULL, '2025-12-09 09:37:36', '2025-12-09 09:39:07');
 
 -- --------------------------------------------------------
 
@@ -136,6 +151,28 @@ CREATE TABLE `order_items` (
   `size` varchar(10) NOT NULL,
   `price` decimal(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `order_items`
+--
+
+INSERT INTO `order_items` (`idOrderItem`, `idOrder`, `idProduct`, `quantity`, `size`, `price`) VALUES
+(1, 1, 6, 1, 'M', 4600000.00),
+(2, 2, 1, 1, 'M', 8000000.00),
+(3, 3, 1, 1, 'M', 8000000.00),
+(4, 4, 2, 117, 'M', 152136.75),
+(5, 5, 2, 117, 'M', 152136.75),
+(6, 6, 2, 117, 'M', 152136.75),
+(7, 7, 2, 117, 'M', 152136.75),
+(8, 8, 2, 117, 'M', 152136.75),
+(9, 9, 2, 117, 'M', 152136.75),
+(10, 10, 2, 117, 'M', 152136.75),
+(11, 11, 2, 117, 'M', 152136.75),
+(12, 12, 5, 11, 'M', 127272.73),
+(13, 13, 5, 11, 'M', 127272.73),
+(14, 14, 5, 11, 'M', 127272.73),
+(15, 15, 2, 117, 'M', 152136.75),
+(16, 16, 5, 11, 'M', 127272.73);
 
 -- --------------------------------------------------------
 
@@ -179,7 +216,8 @@ INSERT INTO `product` (`idProduct`, `nameProduct`, `amountProduct`, `S`, `M`, `L
 (25, 'Mũ bảo hiểm Arai Samura Spirit Gold (Limited)', 3, 1, 1, 1, 'img/arai2.jpg', 16500000, '2021-03-01 16:19:01', 'Chưa có mô tả', 3, 1, 22),
 (26, 'Arai RX-7 Pedrosa Samurai Spirit', 7, 0, 0, 1, 'img/arai3.jpg', 14850000, '2021-03-01 16:20:45', 'Chưa có mô tả', 3, 1, 100),
 (27, 'Mũ Fullface Poc Revo Orange', 100, 1, 1, 1, 'img/torc2.jpg', 1600000, '2021-03-01 16:22:17', 'Kiểu dáng nón siêu gọn, trọng lượng nhẹ, đặc biệt mút nón đội cực êm. Dòng nón Poc Revo là phiên bản nón fullface mới nhất của hãng hiện nay.', 4, 1, 300),
-(28, 'Nón Bảo Hiểm Fullface Torc T18 Đặc Biệt', 3, 0, 1, 1, 'img/torc3.jpg', 1780000, '2021-03-01 16:27:15', 'Nón trang bị 2 kính, lồng nón có thể tháo rời vệ sinh. Điểm nổi bật của dòng nón này là kiểu dáng thiết kế tính xảo. Phần mũi nón ngoàm xuống kiểu dáng thể thao, phong cách. Đặc biệt hơn lớp mút ôm trọn vòng đầu và chất liệu bên trong êm hơn có phần đàn hồi hơn so với các dòng nón như LS2,Yohe,GXT,…', 4, 1, 0);
+(28, 'Nón Bảo Hiểm Fullface Torc T18 Đặc Biệt', 3, 0, 1, 1, 'img/torc3.jpg', 1780000, '2021-03-01 16:27:15', 'Nón trang bị 2 kính, lồng nón có thể tháo rời vệ sinh. Điểm nổi bật của dòng nón này là kiểu dáng thiết kế tính xảo. Phần mũi nón ngoàm xuống kiểu dáng thể thao, phong cách. Đặc biệt hơn lớp mút ôm trọn vòng đầu và chất liệu bên trong êm hơn có phần đàn hồi hơn so với các dòng nón như LS2,Yohe,GXT,…', 4, 1, 0),
+(30, 'Mũ bảo hiểm fullface SHOEI Z8-MM93 Test', NULL, 1, 1, 1, 'img/imgProduct-1763278616087-815929955.png', 2000000, '2025-11-16 07:36:56', 'mũ bảo hiểm test', 2, NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -204,7 +242,8 @@ CREATE TABLE `user` (
 --
 
 INSERT INTO `user` (`idUser`, `ho`, `ten`, `email`, `username`, `password`, `role`, `phone`, `address`) VALUES
-(8, 'Trần', 'Huy', 'quanghuytxc@gmail.com', 'tranhuy', '$2b$10$ji97Q8C7ObFhbJ/gaGtvNebcs5MZ/Bhp5Acuen1ZGG106WvxF1uju', 'customer', 123456789, 'Ha Noi');
+(8, 'Trần', 'Huy', 'quanghuytxc@gmail.com', 'tranhuy', '$2b$10$ji97Q8C7ObFhbJ/gaGtvNebcs5MZ/Bhp5Acuen1ZGG106WvxF1uju', 'customer', 123456789, 'Ha Noi'),
+(9, 'tran', 'huy', 'tranlinh25.10.2004@gmail.com', 'admin', '$2b$10$vgAKsJPTzRgLwZNKpCyBc.foh6cII/mHwqaXJGITjnzuf/khIo5qi', 'admin', 333216460, 'Hà Nội');
 
 -- --------------------------------------------------------
 
@@ -227,6 +266,13 @@ CREATE TABLE `user_addresses` (
   `updatedAt` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Đang đổ dữ liệu cho bảng `user_addresses`
+--
+
+INSERT INTO `user_addresses` (`idAddress`, `idUser`, `fullName`, `phone`, `province`, `district`, `ward`, `detailAddress`, `addressType`, `isDefault`, `createdAt`, `updatedAt`) VALUES
+(1, 8, 'Trần Huy', '0323555267', 'Hà Nội', 'Nam Từ Liêm', 'Phường Mỹ Đình 1', 'Ha Noi 25A', 'home', 1, '2025-11-30 17:05:04', '2025-12-07 15:39:05');
+
 -- --------------------------------------------------------
 
 --
@@ -245,7 +291,9 @@ CREATE TABLE `wishlist` (
 --
 
 INSERT INTO `wishlist` (`idWishlist`, `idUser`, `idProduct`, `createdAt`) VALUES
-(12, 8, 3, '2025-11-14 02:14:10');
+(54, 8, 5, '2025-11-30 22:17:14'),
+(68, 8, 2, '2025-12-07 14:50:19'),
+(69, 8, 3, '2025-12-07 14:50:22');
 
 --
 -- Chỉ mục cho các bảng đã đổ
@@ -270,14 +318,16 @@ ALTER TABLE `catalog`
 --
 ALTER TABLE `comment`
   ADD PRIMARY KEY (`idComment`),
-  ADD KEY `idProduct` (`idProduct`);
+  ADD KEY `idProduct` (`idProduct`),
+  ADD KEY `fk_comment_user` (`idUser`);
 
 --
 -- Chỉ mục cho bảng `orders`
 --
 ALTER TABLE `orders`
   ADD PRIMARY KEY (`idOrder`),
-  ADD KEY `idUser` (`idUser`);
+  ADD KEY `idUser` (`idUser`),
+  ADD KEY `idx_transactionNo` (`transactionNo`);
 
 --
 -- Chỉ mục cho bảng `order_items`
@@ -323,7 +373,7 @@ ALTER TABLE `wishlist`
 -- AUTO_INCREMENT cho bảng `cart`
 --
 ALTER TABLE `cart`
-  MODIFY `idCart` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `idCart` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT cho bảng `catalog`
@@ -341,37 +391,37 @@ ALTER TABLE `comment`
 -- AUTO_INCREMENT cho bảng `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `idOrder` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idOrder` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT cho bảng `order_items`
 --
 ALTER TABLE `order_items`
-  MODIFY `idOrderItem` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idOrderItem` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT cho bảng `product`
 --
 ALTER TABLE `product`
-  MODIFY `idProduct` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `idProduct` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT cho bảng `user`
 --
 ALTER TABLE `user`
-  MODIFY `idUser` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `idUser` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT cho bảng `user_addresses`
 --
 ALTER TABLE `user_addresses`
-  MODIFY `idAddress` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idAddress` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT cho bảng `wishlist`
 --
 ALTER TABLE `wishlist`
-  MODIFY `idWishlist` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `idWishlist` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
 
 --
 -- Các ràng buộc cho các bảng đã đổ
@@ -388,7 +438,8 @@ ALTER TABLE `cart`
 -- Các ràng buộc cho bảng `comment`
 --
 ALTER TABLE `comment`
-  ADD CONSTRAINT `comment_ibfk_1` FOREIGN KEY (`idProduct`) REFERENCES `product` (`idProduct`);
+  ADD CONSTRAINT `comment_ibfk_1` FOREIGN KEY (`idProduct`) REFERENCES `product` (`idProduct`),
+  ADD CONSTRAINT `fk_comment_user` FOREIGN KEY (`idUser`) REFERENCES `user` (`idUser`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Các ràng buộc cho bảng `orders`

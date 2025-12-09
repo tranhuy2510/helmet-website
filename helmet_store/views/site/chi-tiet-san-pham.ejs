@@ -63,6 +63,66 @@
         background-color: #d4edda;
         border-color: #c3e6cb;
       }
+      
+      /* Fix slick slider overflow */
+      .product-slider-3,
+      .sidebar-slider {
+        overflow: hidden !important;
+        max-width: 100% !important;
+      }
+      
+      .product-slider-3 .slick-list,
+      .sidebar-slider .slick-list {
+        overflow: hidden !important;
+        max-width: 100% !important;
+      }
+      
+      .product-slider-3 .slick-track,
+      .sidebar-slider .slick-track {
+        display: flex !important;
+        width: 100% !important;
+        transform: none !important;
+      }
+      
+      .product-slider-3 .slick-slide,
+      .sidebar-slider .slick-slide {
+        float: none !important;
+        width: 280px !important;
+        margin: 0 10px;
+      }
+      
+      /* Fix page overflow */
+      html, body {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+      }
+      
+      .container-fluid {
+        overflow-x: hidden !important;
+        padding-right: 15px;
+        padding-left: 15px;
+      }
+      
+      .product-detail .row {
+        margin-left: 0;
+        margin-right: 0;
+      }
+      
+      .product-detail .col-lg-8,
+      .product-detail .col-lg-4 {
+        padding-left: 15px;
+        padding-right: 15px;
+      }
+      
+      /* Fix sidebar width */
+      .sidebar {
+        max-width: 100%;
+      }
+      
+      .sidebar-widget {
+        max-width: 100%;
+        overflow: hidden;
+      }
     </style>
   </head>
 
@@ -221,28 +281,24 @@
               <div id="chi-tiet-san-pham" class="row align-items-center">
                 <div class="col-md-5">
                   <div class="product-slider-single normal-slider">
-                    <% for (var i = 1; i < 6; i++) { %>
                     <img
                       src="../<%= itemPro.imgProduct%>"
-                      alt="Product Image"
+                      alt="<%= itemPro.nameProduct%>"
                     />
-                    <% } %>
                   </div>
                   <div class="product-slider-single-nav normal-slider">
-                    <% for (var i = 1; i < 6; i++) { %>
                     <div class="slider-nav-img">
                       <img
                         src="../<%= itemPro.imgProduct%>"
-                        alt="Product Image"
+                        alt="<%= itemPro.nameProduct%>"
                       />
                     </div>
-                    <% } %>
                   </div>
                 </div>
                 <div class="col-md-7">
                   <div class="product-content">
                     <div class="title">
-                      <h2 id="nameProduct"></h2>
+                      <h2 id="nameProduct"><%=itemPro.nameProduct%></h2>
                     </div>
                     <div class="ratting">
                       <i class="fa fa-star"></i>
@@ -253,7 +309,7 @@
                     </div>
                     <div class="price">
                       <h4>Giá:</h4>
-                      <p id="priceProduct"></p>
+                      <p id="priceProduct"><%=itemPro.priceProduct.toLocaleString('vi-VN')%> đ</p>
                     </div>
                     <div class="quantity">
                       <h4>Số lượng:</h4>
@@ -269,10 +325,17 @@
                     </div>
                     <div class="p-size">
                       <h4>Kích thước:</h4>
-                      <div
-                        id="sizeProduct"
-                        class="btn-group btn-group-sm"
-                      ></div>
+                      <div id="sizeProduct" class="btn-group btn-group-sm">
+                        <% if (itemPro.S == 1) { %>
+                          <button type="button" class="btn size-btn" data-size="S">S</button>
+                        <% } %>
+                        <% if (itemPro.M == 1) { %>
+                          <button type="button" class="btn size-btn active" data-size="M">M</button>
+                        <% } %>
+                        <% if (itemPro.L == 1) { %>
+                          <button type="button" class="btn size-btn" data-size="L">L</button>
+                        <% } %>
+                      </div>
                     </div>
                     <div class="p-color">
                       <h4>Màu:</h4>
@@ -332,7 +395,7 @@
                 <div class="tab-content">
                   <div id="description" class="container tab-pane active">
                     <h4>Mô tả sản phẩm</h4>
-                    <p id="desProduct"></p>
+                    <p id="desProduct"><%=itemPro.desProduct%></p>
                   </div>
                   <div id="specification" class="container tab-pane fade">
                     <h4>Chi tiết sản phẩm</h4>
@@ -457,66 +520,62 @@
                 <h1>Nón tương tự</h1>
               </div>
 
-              <div
-                class="row align-items-center product-slider product-slider-3"
-              >
+              <div class="product-slider product-slider-3">
                 <% for (product of listPro) { %>
-                <div class="col-lg-3">
-                  <div class="product-item">
-                    <div class="product-title">
-                      <a class="slug" href="/san-pham/<%=product.nameProduct%>">
-                        <%=product.nameProduct%>
-                      </a>
-                      <div class="ratting">
-                        <i class="fa fa-star"></i>
-                        <i class="fa fa-star"></i>
-                        <i class="fa fa-star"></i>
-                        <i class="fa fa-star"></i>
-                        <i class="fa fa-star"></i>
-                      </div>
+                <div class="product-item">
+                  <div class="product-title">
+                    <a class="slug" href="/san-pham/<%= slug(product.nameProduct) %>">
+                      <%=product.nameProduct%>
+                    </a>
+                    <div class="ratting">
+                      <i class="fa fa-star"></i>
+                      <i class="fa fa-star"></i>
+                      <i class="fa fa-star"></i>
+                      <i class="fa fa-star"></i>
+                      <i class="fa fa-star"></i>
                     </div>
-                    <div class="product-image">
-                      <a href="/san-pham/<%= slug(product.nameProduct) %>">
-                        <img
-                          src="../<%=product.imgProduct%>"
-                          alt="Product Image"
-                        />
-                      </a>
-                      <div
-                        class="product-action"
-                        data-product-id="<%=product.idProduct%>"
-                      >
-                        <a
-                          href="#"
-                          class="add-to-cart"
-                          data-product-id="<%=product.idProduct%>"
-                          ><i class="fa fa-cart-plus"></i
-                        ></a>
-                        <a
-                          href="#"
-                          class="add-to-wishlist"
-                          data-product-id="<%=product.idProduct%>"
-                          ><i class="<% if (userWishlistIds && userWishlistIds.includes(product.idProduct)) { %>fas<% } else { %>far<% } %> fa-heart"></i
-                        ></a>
-                        <a href="/san-pham/<%= slug(product.nameProduct) %>"
-                          ><i class="fa fa-search"></i
-                        ></a>
-                      </div>
-                    </div>
-                    <div class="product-price">
-                      <h3>
-                        <%=product.priceProduct.toLocaleString('vi-VN')%><span>
-                          ₫</span
-                        >
-                      </h3>
+                  </div>
+                  <div class="product-image">
+                    <a href="/san-pham/<%= slug(product.nameProduct) %>">
+                      <img
+                        src="../<%=product.imgProduct%>"
+                        alt="Product Image"
+                      />
+                    </a>
+                    <div
+                      class="product-action"
+                      data-product-id="<%=product.idProduct%>"
+                    >
                       <a
-                        class="btn add-to-cart"
                         href="#"
+                        class="add-to-cart"
                         data-product-id="<%=product.idProduct%>"
-                      >
-                        <i class="fa fa-shopping-cart"></i>Mua Ngay
-                      </a>
+                        ><i class="fa fa-cart-plus"></i
+                      ></a>
+                      <a
+                        href="#"
+                        class="add-to-wishlist"
+                        data-product-id="<%=product.idProduct%>"
+                        ><i class="<% if (userWishlistIds && userWishlistIds.includes(product.idProduct)) { %>fas<% } else { %>far<% } %> fa-heart"></i
+                      ></a>
+                      <a href="/san-pham/<%= slug(product.nameProduct) %>"
+                        ><i class="fa fa-search"></i
+                      ></a>
                     </div>
+                  </div>
+                  <div class="product-price">
+                    <h3>
+                      <%=product.priceProduct.toLocaleString('vi-VN')%><span>
+                        ₫</span
+                      >
+                    </h3>
+                    <a
+                      class="btn add-to-cart"
+                      href="#"
+                      data-product-id="<%=product.idProduct%>"
+                    >
+                      <i class="fa fa-shopping-cart"></i>Mua Ngay
+                    </a>
                   </div>
                 </div>
                 <% } %>
@@ -548,7 +607,7 @@
                 <% for (product of listPro) { %>
                 <div class="product-item">
                   <div class="product-title">
-                    <a href="#"> <%=product.nameProduct%> </a>
+                    <a href="/san-pham/<%= slug(product.nameProduct) %>"> <%=product.nameProduct%> </a>
                     <div class="ratting">
                       <i class="fa fa-star"></i>
                       <i class="fa fa-star"></i>
@@ -558,16 +617,16 @@
                     </div>
                   </div>
                   <div class="product-image">
-                    <a href="product-detail.html">
+                    <a href="/san-pham/<%= slug(product.nameProduct) %>">
                       <img
                         src="../<%=product.imgProduct%>"
                         alt="Product Image"
                       />
                     </a>
-                    <div class="product-action">
-                      <a href="#"><i class="fa fa-cart-plus"></i></a>
-                      <a href="#"><i class="fa fa-heart"></i></a>
-                      <a href="#"><i class="fa fa-search"></i></a>
+                    <div class="product-action" data-product-id="<%=product.idProduct%>">
+                      <a href="#" class="add-to-cart" data-product-id="<%=product.idProduct%>"><i class="fa fa-cart-plus"></i></a>
+                      <a href="#" class="add-to-wishlist" data-product-id="<%=product.idProduct%>"><i class="<% if (userWishlistIds && userWishlistIds.includes(product.idProduct)) { %>fas<% } else { %>far<% } %> fa-heart"></i></a>
+                      <a href="/san-pham/<%= slug(product.nameProduct) %>"><i class="fa fa-search"></i></a>
                     </div>
                   </div>
                   <div class="product-price">
@@ -575,7 +634,7 @@
                       <%=product.priceProduct.toLocaleString('vi-VN')%>
                       <span>₫</span>
                     </h3>
-                    <a class="btn" href=""
+                    <a class="btn add-to-cart" href="#" data-product-id="<%=product.idProduct%>"
                       ><i class="fa fa-shopping-cart"></i>Mua Ngay</a
                     >
                   </div>
@@ -715,61 +774,16 @@
 </html>
 
 <script>
-  const xulidulieu = (data) => {
-    let chi_tiet_san_pham = document.getElementById("chi-tiet-san-pham");
-    let itemPro = data;
-    let nameProduct = document.getElementById("nameProduct");
-    nameProduct.setAttribute("idProduct", `${itemPro.idProduct}`);
-    let priceProduct = document.getElementById("priceProduct");
-    let sizeProduct = document.getElementById("sizeProduct");
-    let desProduct = document.getElementById("desProduct");
-    nameProduct.innerHTML = itemPro.nameProduct;
-    priceProduct.innerHTML =
-      itemPro.priceProduct.toLocaleString("vi-VN") + " đ";
-    if (itemPro.S == 1) {
-      sizeProduct.innerHTML +=
-        '<button type="button" class="btn size-btn" data-size="S">S</button>';
-    }
-    if (itemPro.M == 1) {
-      sizeProduct.innerHTML +=
-        '<button type="button" class="btn size-btn active" data-size="M">M</button>';
-    }
-    if (itemPro.L == 1) {
-      sizeProduct.innerHTML +=
-        '<button type="button" class="btn size-btn" data-size="L">L</button>';
-    }
-
-    // Add size selection functionality
-    document.querySelectorAll(".size-btn").forEach((btn) => {
-      btn.addEventListener("click", function () {
-        document
-          .querySelectorAll(".size-btn")
-          .forEach((b) => b.classList.remove("active"));
-        this.classList.add("active");
-        document
-          .querySelector(".add-to-cart")
-          .setAttribute("data-size", this.getAttribute("data-size"));
-      });
+  // Add size selection functionality
+  document.querySelectorAll(".size-btn").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      document
+        .querySelectorAll(".size-btn")
+        .forEach((b) => b.classList.remove("active"));
+      this.classList.add("active");
+      document
+        .querySelector(".add-to-cart")
+        .setAttribute("data-size", this.getAttribute("data-size"));
     });
-    desProduct.innerHTML = itemPro.desProduct;
-  };
-
-  var paramsString = window.location.href;
-  var index = paramsString.lastIndexOf("m/") + 2;
-  var ten_san_pham = paramsString.slice(index);
-
-  window
-    .fetch(
-      `http://localhost:3000/san-pham/api/chi-tiet-san-pham/${ten_san_pham}`
-    )
-    .then((res) => {
-      return res.json();
-    })
-    .then((data) => {
-      console.log(data);
-      xulidulieu(data);
-    })
-    .catch((err) => {
-      console.log(err);
-    });
+  });
 </script>
