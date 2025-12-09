@@ -159,14 +159,92 @@
     <div class="login">
       <div class="container-fluid">
         <div class="row">
-          <div class="col-lg-6 mx-auto">
-            <div class="login-form">
-              <form action="/users/dang-nhap" method="post">
-                <div class="row">
-                  <legend class="text-center"><%=message%></legend>
-                  <a class="mx-auto" href="/">Quay lại trang chủ</a>
+          <div class="col-lg-8 mx-auto">
+            <div class="login-form" style="padding: 40px;">
+              <% if (typeof success !== 'undefined' && success) { %>
+                <!-- Thanh toán thành công -->
+                <div class="text-center mb-4">
+                  <i class="fas fa-check-circle" style="font-size: 80px; color: #28a745;"></i>
                 </div>
-              </form>
+                <div class="row">
+                  <div class="col-12">
+                    <h2 class="text-center text-success mb-3">
+                      <i class="fa fa-check-circle"></i> Thanh toán thành công!
+                    </h2>
+                    <p class="text-center lead mb-4"><%= message || 'Cảm ơn bạn đã thanh toán!' %></p>
+                    
+                    <% if (typeof orderId !== 'undefined' && orderId) { %>
+                    <div class="alert alert-info">
+                      <h5><i class="fa fa-info-circle"></i> Thông tin đơn hàng:</h5>
+                      <hr>
+                      <div class="row">
+                        <div class="col-md-6">
+                          <p><strong>Mã đơn hàng:</strong> #<%= orderId %></p>
+                          <% if (typeof amount !== 'undefined' && amount) { %>
+                          <p><strong>Số tiền:</strong> <%= amount.toLocaleString('vi-VN') %> ₫</p>
+                          <% } %>
+                        </div>
+                        <div class="col-md-6">
+                          <% if (typeof transactionNo !== 'undefined' && transactionNo) { %>
+                          <p><strong>Mã giao dịch:</strong> <%= transactionNo %></p>
+                          <% } %>
+                          <% if (typeof bankCode !== 'undefined' && bankCode) { %>
+                          <p><strong>Ngân hàng:</strong> <%= bankCode %></p>
+                          <% } %>
+                          <% if (typeof payDate !== 'undefined' && payDate) { %>
+                          <p><strong>Thời gian:</strong> <%= payDate %></p>
+                          <% } %>
+                        </div>
+                      </div>
+                    </div>
+                    <% } %>
+                    
+                    <div class="text-center mt-4">
+                      <a href="/orders" class="btn btn-primary btn-lg mr-2">
+                        <i class="fa fa-list"></i> Xem đơn hàng
+                      </a>
+                      <a href="/" class="btn btn-secondary btn-lg">
+                        <i class="fa fa-home"></i> Về trang chủ
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              <% } else { %>
+                <!-- Thanh toán thất bại -->
+                <div class="text-center mb-4">
+                  <i class="fas fa-times-circle" style="font-size: 80px; color: #dc3545;"></i>
+                </div>
+                <div class="row">
+                  <div class="col-12">
+                    <h2 class="text-center text-danger mb-3">
+                      <i class="fa fa-times-circle"></i> Thanh toán không thành công
+                    </h2>
+                    <p class="text-center lead mb-4"><%= message || 'Đã có lỗi xảy ra trong quá trình thanh toán' %></p>
+                    
+                    <% if (typeof orderId !== 'undefined' && orderId) { %>
+                    <div class="alert alert-warning">
+                      <p><strong>Mã đơn hàng:</strong> #<%= orderId %></p>
+                      <% if (typeof responseCode !== 'undefined' && responseCode) { %>
+                      <p><strong>Mã lỗi:</strong> <%= responseCode %></p>
+                      <% } %>
+                      <p class="mb-0"><em>Đơn hàng của bạn vẫn được lưu. Bạn có thể thử thanh toán lại hoặc chọn phương thức khác.</em></p>
+                    </div>
+                    <% } %>
+                    
+                    <div class="text-center mt-4">
+                      <a href="/thanh-toan" class="btn btn-warning btn-lg mr-2">
+                        <i class="fa fa-redo"></i> Thử lại
+                      </a>
+                      <a href="/orders" class="btn btn-primary btn-lg mr-2">
+                        <i class="fa fa-list"></i> Xem đơn hàng
+                      </a>
+                      <a href="/" class="btn btn-secondary btn-lg">
+                        <i class="fa fa-home"></i> Về trang chủ
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              <% } %>
             </div>
           </div>
         </div>

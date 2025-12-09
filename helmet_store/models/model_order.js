@@ -92,6 +92,8 @@ function validatePagination(limit, offset) {
 // Create new order (transaction)
 exports.createOrder = (orderData) => {
   return new Promise((resolve, reject) => {
+    let connection;
+    
     try {
       if (!orderData || typeof orderData !== "object") {
         throw new Error("Order data must be an object");
@@ -105,42 +107,71 @@ exports.createOrder = (orderData) => {
       validateString(paymentMethod, "Payment method");
       validateCartItems(cartItems);
 
-      db.beginTransaction((err) => {
+      // Lấy connection từ pool
+      db.getConnection((err, conn) => {
         if (err) return reject(err);
+        
+        connection = conn;
+        
+        // Bắt đầu transaction
+        connection.beginTransaction((err) => {
+          if (err) {
+            connection.release();
+            return reject(err);
+          }
 
-        const orderSql = `INSERT INTO orders (idUser, totalAmount, shippingAddress, paymentMethod) VALUES (?, ?, ?, ?)`;
-        db.query(
-          orderSql,
-          [idUser, totalAmount, shippingAddress, paymentMethod],
-          (err, orderResult) => {
-            if (err) return db.rollback(() => reject(err));
+          const orderSql = `INSERT INTO orders (idUser, totalAmount, shippingAddress, paymentMethod) VALUES (?, ?, ?, ?)`;
+          connection.query(
+            orderSql,
+            [idUser, totalAmount, shippingAddress, paymentMethod],
+            (err, orderResult) => {
+              if (err) {
+                return connection.rollback(() => {
+                  connection.release();
+                  reject(err);
+                });
+              }
 
-            const orderId = orderResult.insertId;
-            const orderItemsSql = `INSERT INTO order_items (idOrder, idProduct, quantity, size, price) VALUES ?`;
-            const orderItemsValues = cartItems.map((item) => [
-              orderId,
-              item.idProduct,
-              item.quantity,
-              item.size,
-              item.price,
-            ]);
+              const orderId = orderResult.insertId;
+              const orderItemsSql = `INSERT INTO order_items (idOrder, idProduct, quantity, size, price) VALUES ?`;
+              const orderItemsValues = cartItems.map((item) => [
+                orderId,
+                item.idProduct,
+                item.quantity,
+                item.size,
+                item.price,
+              ]);
 
-            db.query(orderItemsSql, [orderItemsValues], (err, itemsResult) => {
-              if (err) return db.rollback(() => reject(err));
+              connection.query(orderItemsSql, [orderItemsValues], (err, itemsResult) => {
+                if (err) {
+                  return connection.rollback(() => {
+                    connection.release();
+                    reject(err);
+                  });
+                }
 
-              db.commit((err) => {
-                if (err) return db.rollback(() => reject(err));
-                resolve({
-                  orderId,
-                  message: "Order created successfully",
-                  orderItems: itemsResult.affectedRows,
+                connection.commit((err) => {
+                  if (err) {
+                    return connection.rollback(() => {
+                      connection.release();
+                      reject(err);
+                    });
+                  }
+                  
+                  connection.release();
+                  resolve({
+                    orderId,
+                    message: "Order created successfully",
+                    orderItems: itemsResult.affectedRows,
+                  });
                 });
               });
-            });
-          }
-        );
+            }
+          );
+        });
       });
     } catch (err) {
+      if (connection) connection.release();
       reject(err);
     }
   });
@@ -222,6 +253,24 @@ exports.getOrderDetails = (orderId, idUser = null) => {
           })),
         };
         resolve(order);
+      });
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
+
+// Get order by ID (simple)
+exports.getOrderById = (orderId) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const validatedOrderId = validateId(orderId);
+      const sql = `SELECT * FROM orders WHERE idOrder = ?`;
+      
+      db.query(sql, [validatedOrderId], (err, result) => {
+        if (err) return reject(err);
+        if (result.length === 0) return resolve(null);
+        resolve(result[0]);
       });
     } catch (err) {
       reject(err);
@@ -489,7 +538,14 @@ exports.updateOrderStatus = function (orderId, newStatus, adminNote) {
   return new Promise((resolve, reject) => {
     try {
       validateId(orderId);
-      validateStatus(newStatus);
+      
+      // Cho phép các trạng thái thanh toán VNPay
+      const vnpayStatuses = ['PAID', 'FAILED', 'PENDING'];
+      const isVnpayStatus = vnpayStatuses.includes(newStatus);
+      
+      if (!isVnpayStatus) {
+        validateStatus(newStatus);
+      }
 
       let updateSql = `UPDATE orders SET status = ?, updatedAt = CURRENT_TIMESTAMP`;
       let params = [newStatus];
@@ -497,6 +553,20 @@ exports.updateOrderStatus = function (orderId, newStatus, adminNote) {
       // Nếu đơn hàng được giao, cập nhật ngày giao và trạng thái thanh toán
       if (newStatus === "delivered") {
         updateSql += `, deliveredAt = CURRENT_TIMESTAMP, paymentStatus = 'paid'`;
+      }
+      
+      // Nếu thanh toán VNPay thành công
+      if (newStatus === 'PAID') {
+        updateSql += `, paymentStatus = 'paid'`;
+        if (adminNote) {
+          updateSql += `, transactionNo = ?`;
+          params.push(adminNote); // adminNote chứa transactionNo
+        }
+      }
+      
+      // Nếu thanh toán thất bại
+      if (newStatus === 'FAILED') {
+        updateSql += `, paymentStatus = 'failed'`;
       }
 
       updateSql += ` WHERE idOrder = ?`;

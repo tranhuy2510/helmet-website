@@ -11,9 +11,11 @@ const pool = mysql.createPool({
   charset: 'utf8mb4'
 });
 
-// Promisify pool.query để dùng async/await
+// Promisify pool.query để dùng async/await (giữ nguyên để tương thích với code cũ)
 pool.query = util.promisify(pool.query);
-pool.getConnection = util.promisify(pool.getConnection);
+
+// Không promisify getConnection vì cần dùng callback để xử lý transaction
+// pool.getConnection sẽ giữ nguyên dạng callback
 
 pool.on('error', (err) => {
   console.error('MySQL pool error', err);
@@ -21,12 +23,17 @@ pool.on('error', (err) => {
 
 async function testConnection() {
   try {
-    const conn = await pool.getConnection();
-    conn.release();
-    console.log('Database pool created and connection tested.');
+    pool.getConnection((err, conn) => {
+      if (err) {
+        console.error('Database connection failed:', err);
+        process.exit(1);
+      }
+      conn.release();
+      console.log('Database pool created and connection tested.');
+    });
   } catch (err) {
     console.error('Database connection failed:', err);
-    process.exit(1); // optional: thoát nếu cần
+    process.exit(1);
   }
 }
 

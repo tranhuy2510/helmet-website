@@ -1,3 +1,6 @@
+// Load environment variables
+require('dotenv').config();
+
 var createError = require("http-errors");
 var express = require("express");
 var path = require("path");
@@ -14,6 +17,7 @@ var cartRouter = require("./routes/cart");
 var wishlistRouter = require("./routes/wishlist");
 var ordersRouter = require("./routes/orders");
 var adminRouter = require("./routes/admin");
+var vnpayRouter = require("./routes/vnpay");
 
 var app = express();
 
@@ -90,6 +94,7 @@ app.use("/san-pham", productRouter);
 app.use("/cart", cartRouter);
 app.use("/wishlist", wishlistRouter);
 app.use("/orders", ordersRouter);
+app.use("/vnpay", vnpayRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

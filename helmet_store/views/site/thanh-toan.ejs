@@ -356,15 +356,18 @@
                       <input
                         type="radio"
                         class="custom-control-input"
-                        id="payment-1"
+                        id="payment-vnpay"
                         name="payment"
+                        value="VNPAY"
                       />
-                      <label class="custom-control-label" for="payment-1"
-                        >Paypal</label
-                      >
+                      <label class="custom-control-label" for="payment-vnpay">
+                        <i class="fas fa-qrcode"></i> VNPay QR Code
+                      </label>
                     </div>
-                    <div class="payment-content" id="payment-1-show">
-                      <p>Đang cập nhật...</p>
+                    <div class="payment-content" id="payment-vnpay-show">
+                      <p style="color: #0066cc;">
+                        💳 Thanh toán qua VNPay bằng QR Code. Hỗ trợ tất cả các ngân hàng và ví điện tử.
+                      </p>
                     </div>
                   </div>
                   <div class="payment-method">
@@ -393,6 +396,22 @@
                       <input
                         type="radio"
                         class="custom-control-input"
+                        id="payment-1"
+                        name="payment"
+                      />
+                      <label class="custom-control-label" for="payment-1"
+                        >Paypal</label
+                      >
+                    </div>
+                    <div class="payment-content" id="payment-1-show">
+                      <p>Đang cập nhật...</p>
+                    </div>
+                  </div>
+                  <div class="payment-method">
+                    <div class="custom-control custom-radio">
+                      <input
+                        type="radio"
+                        class="custom-control-input"
                         id="payment-5"
                         name="payment"
                       />
@@ -408,10 +427,11 @@
                 <div class="checkout-btn">
                   <button
                     type="button"
-                    onclick="processCODOrder()"
+                    onclick="processPayment()"
                     id="checkoutButton"
+                    class="btn-primary"
                   >
-                    <i class="fa fa-shopping-cart"></i> Đặt Hàng COD
+                    <i class="fa fa-shopping-cart"></i> <span id="btnText">Đặt Hàng COD</span>
                   </button>
                 </div>
               </div>
@@ -636,6 +656,154 @@
           }
         });
       });
+
+      // Xử lý thanh toán theo phương thức đã chọn
+      function processPayment() {
+        const paymentMethod = $('input[name="payment"]:checked').val();
+        
+        if (paymentMethod === 'VNPAY') {
+          processVNPayPayment();
+        } else if (paymentMethod === 'COD') {
+          processCODOrder();
+        } else {
+          alert('Phương thức thanh toán này đang được cập nhật');
+        }
+      }
+      
+      // Cập nhật text nút khi chọn phương thức thanh toán
+      $(document).ready(function() {
+        $('input[name="payment"]').on('change', function() {
+          const paymentMethod = $(this).val();
+          const btnText = $('#btnText');
+          
+          if (paymentMethod === 'VNPAY') {
+            btnText.html('Thanh Toán VNPay QR');
+          } else if (paymentMethod === 'COD') {
+            btnText.html('Đặt Hàng COD');
+          } else {
+            btnText.html('Đặt Hàng');
+          }
+        });
+      });
+      
+      // Xử lý thanh toán VNPay
+      function processVNPayPayment() {
+        // Kiểm tra có sản phẩm được chọn không
+        const selectedItems = [];
+        const cartItems = [];
+        
+        $('.item-checkbox:checked').each(function() {
+          const cartId = this.getAttribute('data-cart-id');
+          const price = parseInt($(this).data('price'));
+          const itemElement = $(this).closest('.cart-item');
+          const itemId = itemElement.data('item-id');
+          
+          if (cartId) {
+            selectedItems.push(parseInt(cartId));
+            
+            // Lấy thông tin từ DOM
+            const itemText = $(this).siblings('.cart-item-text').text();
+            const nameMatch = itemText.match(/(.+?)\s+x\s+(\d+)/);
+            const quantity = nameMatch ? parseInt(nameMatch[2]) : 1;
+            
+            cartItems.push({
+              idProduct: itemId,
+              quantity: quantity,
+              price: price / quantity,
+              size: 'M' // Default size
+            });
+          }
+        });
+
+        if (selectedItems.length === 0) {
+          alert('Vui lòng chọn ít nhất một sản phẩm để thanh toán');
+          return;
+        }
+
+        // Lấy thông tin giao hàng
+        const customerName = $('#firstName').val().trim() + ' ' + $('#lastName').val().trim();
+        const customerPhone = $('#phone').val().trim();
+        const email = $('#email').val().trim();
+        const address = $('#shippingAddress').val().trim();
+        const orderNotes = $('#orderNotes').val().trim();
+
+        // Validate form
+        if (!customerName.trim() || !customerPhone || !email || !address) {
+          alert('Vui lòng điền đầy đủ thông tin giao hàng');
+          return;
+        }
+
+        // Validate email
+        let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          alert('Email không hợp lệ');
+          return;
+        }
+
+        // Validate phone
+        let phoneRegex = /^[0-9]{10,11}$/;
+        if (!phoneRegex.test(customerPhone)) {
+          alert('Số điện thoại không hợp lệ (10-11 số)');
+          return;
+        }
+
+        // Tính tổng tiền
+        let totalAmount = 0;
+        $('.item-checkbox:checked').each(function() {
+          totalAmount += parseInt($(this).data('price'));
+        });
+        totalAmount += 30000; // Phí ship
+
+        // Disable button và hiển thị loading
+        const $button = $('#checkoutButton');
+        const originalText = $button.html();
+        $button.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Đang tạo thanh toán...');
+
+        // Prepare request data
+        const requestData = {
+          amount: totalAmount,
+          orderDescription: `Thanh toan don hang Helmet Store - ${customerName}`,
+          bankCode: '', // Để trống để hiển thị QR code
+          language: 'vn',
+          name: customerName,
+          phone: customerPhone,
+          address: address,
+          note: orderNotes,
+          cartItems: cartItems
+        };
+
+        console.log('Sending VNPay request:', requestData);
+
+        // Gửi request tạo thanh toán
+        $.ajax({
+          url: '/vnpay/create_payment_url',
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify(requestData),
+          success: function(response) {
+            console.log('VNPay response:', response);
+            if (response.success && response.paymentUrl) {
+              // Chuyển hướng đến trang thanh toán VNPay
+              window.location.href = response.paymentUrl;
+            } else {
+              alert('❌ ' + (response.message || 'Không thể tạo thanh toán'));
+              $button.prop('disabled', false).html(originalText);
+            }
+          },
+          error: function(xhr, status, error) {
+            console.error('VNPay request failed:', xhr.responseText, status, error);
+            let errorMessage = 'Có lỗi xảy ra khi tạo thanh toán';
+            try {
+              const errorResponse = JSON.parse(xhr.responseText);
+              errorMessage = errorResponse.message || errorMessage;
+            } catch (e) {
+              errorMessage += ': ' + (xhr.responseText || error);
+            }
+            alert('❌ ' + errorMessage);
+            $button.prop('disabled', false).html(originalText);
+          }
+        });
+      }
 
       // Xử lý đặt hàng COD
       function processCODOrder() {
