@@ -183,11 +183,10 @@ router.post("/luu", async function (req, res, next) {
     res.redirect("/users/dang-ky");
   }
 
-  res.redirect("/users/thanh-cong");
+  res.redirect("/users/dang-ky-thanh-cong");
 });
-router.get("/thanh-cong", function (req, res, next) {
-  let message = "Đăng ký thành công";
-  res.render("site/thanh-cong", { message: message });
+router.get("/dang-ky-thanh-cong", function (req, res, next) {
+  res.render("site/dang-ky-thanh-cong");
 });
 router.get("/dang-xuat", function (req, res, next) {
   req.session.destroy();
@@ -202,11 +201,13 @@ router.post("/doi-mat-khau", function (req, res, next) {
 
   // VALIDATE
   if (!password || !newPassword || !confirmPassword) {
-    return res.render("site/thanh-cong", { message: "Dữ liệu không hợp lệ" });
+    return res.render("site/tai-khoan-thong-bao", {
+      message: "Dữ liệu không hợp lệ",
+    });
   }
 
   if (newPassword !== confirmPassword) {
-    return res.render("site/thanh-cong", {
+    return res.render("site/tai-khoan-thong-bao", {
       message: "Mật khẩu nhập lại không đúng",
     });
   }
@@ -227,10 +228,12 @@ router.post("/doi-mat-khau", function (req, res, next) {
       let sql2 = `UPDATE user SET password='${pass_mahoa}' WHERE username LIKE '%${u}%'`;
       db.query(sql2, (err, result) => {
         let mess = "Đổi mật khẩu thành công";
-        res.render("site/thanh-cong", { message: mess });
+        res.render("site/tai-khoan-thong-bao", { message: mess });
       });
     } else {
-      res.render("site/thanh-cong", { message: "Mật khẩu cũ không đúng" });
+      res.render("site/tai-khoan-thong-bao", {
+        message: "Mật khẩu cũ không đúng",
+      });
     }
   });
 });
@@ -743,7 +746,7 @@ router.post("/quen-mat-khau", async (req, res) => {
     };
 
     transporter.sendMail(mailOptions, function (error, info) {
-      res.render("site/thanh-cong", { message: mess });
+      res.render("site/tai-khoan-thong-bao", { message: mess });
     });
   } else {
     let mess = "Email không tồn tại!";
