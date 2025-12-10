@@ -118,70 +118,95 @@ router.get("/addnew", function (req, res, next) {
   res.render("product_addnew"); // hiển thị form cho client nhập data
 });
 router.get("/:name", async function (req, res) {
-  let name = req.params.name;
-  let listProAll = await modelProduct.list();
-  let listCat = await modelCatalog.list();
+  try {
+    // Decode URL-encoded characters (e.g., %C4%91 -> đ)
+    let name = decodeURIComponent(req.params.name);
+    console.log("========== PRODUCT ROUTE DEBUG ==========");
+    console.log("Requested URL slug (after decode):", name);
+    let listProAll = await modelProduct.list();
+    let listCat = await modelCatalog.list();
 
-  for (itemPro of listProAll) {
-    var newNamePro = itemPro.nameProduct;
-    breadcrumb = newNamePro;
-    newNamePro = replaceNameProduct(itemPro.nameProduct).toLowerCase();
-    console.log(newNamePro);
-    if (newNamePro == name) {
-      var newItemPro = itemPro;
-      break;
+    let newItemPro = null;
+    for (itemPro of listProAll) {
+      var newNamePro = itemPro.nameProduct;
+      breadcrumb = newNamePro;
+      newNamePro = replaceNameProduct(itemPro.nameProduct).toLowerCase();
+      console.log(`Product: "${itemPro.nameProduct}" -> slug: "${newNamePro}"`);
+      if (newNamePro == name) {
+        console.log("✓ MATCH FOUND!");
+        newItemPro = itemPro;
+        break;
+      }
     }
-  }
-  if (!newItemPro) {
-    // product not found -> show 404 friendly page
-    return res
-      .status(404)
-      .render("error", { message: "Sản phẩm không tồn tại" });
-  }
+    if (!newItemPro) {
+      console.log("✗ NO MATCH - Product not found");
+    }
+    console.log("========================================");
+    if (!newItemPro) {
+      // product not found -> show 404 friendly page
+      const notFoundError = new Error("Sản phẩm không tồn tại");
+      notFoundError.status = 404;
+      return res
+        .status(404)
+        .render("error", { message: "Sản phẩm không tồn tại", error: notFoundError });
+    }
 
-  let listComment = await modelProduct.getComment(newItemPro.idProduct);
-  
-  // Kiểm tra trạng thái đăng nhập và đã mua hàng
-  let canReview = false;
-  let hasReviewed = false;
-  let userPurchased = false;
-  
-  if (req.session.User) {
-    try {
-      userPurchased = await modelReview.checkUserPurchased(req.session.User.id, newItemPro.idProduct);
-      hasReviewed = await modelReview.checkUserReviewed(req.session.User.id, newItemPro.idProduct);
-      canReview = userPurchased && !hasReviewed;
-    } catch (error) {
-      console.error('Error checking review status:', error);
+    let listComment = await modelProduct.getComment(newItemPro.idProduct);
+    
+    // Kiểm tra trạng thái đăng nhập và đã mua hàng
+    let canReview = false;
+    let hasReviewed = false;
+    let userPurchased = false;
+    
+    if (req.session.User) {
+      try {
+        userPurchased = await modelReview.checkUserPurchased(req.session.User.id, newItemPro.idProduct);
+        hasReviewed = await modelReview.checkUserReviewed(req.session.User.id, newItemPro.idProduct);
+        canReview = userPurchased && !hasReviewed;
+      } catch (error) {
+        console.error('Error checking review status:', error);
+      }
     }
+    
+    // Lấy danh sách sản phẩm yêu thích của user nếu đã đăng nhập
+    let userWishlistIds = [];
+    if (req.session.User) {
+      try {
+        userWishlistIds = await modelWishlist.getUserWishlistIds(req.session.User.id);
+      } catch (error) {
+        console.error('Error getting wishlist IDs:', error);
+        userWishlistIds = [];
+      }
+    }
+    
+    // Giới hạn chỉ hiển thị 8 sản phẩm ngẫu nhiên để tránh slider quá lớn
+    let listPro = listProAll
+      .filter(p => p.idProduct !== newItemPro.idProduct) // Loại bỏ sản phẩm hiện tại
+      .sort(() => 0.5 - Math.random()) // Shuffle ngẫu nhiên
+      .slice(0, 8); // Chỉ lấy 8 sản phẩm
+    
+    res.render("site/chi-tiet-san-pham", {
+      itemPro: newItemPro,
+      listCat: listCat,
+      listPro: listPro,
+      listComment: listComment,
+      breadcrumb,
+      userWishlistIds: userWishlistIds,
+      user: req.session.User,
+      wishlistCount: req.session.wishlistCount || 0,
+      cartCount: req.session.cartCount || 0,
+      canReview: canReview,
+      hasReviewed: hasReviewed,
+      userPurchased: userPurchased
+    });
+  } catch (error) {
+    console.error('Error loading product detail:', error);
+    error.status = error.status || 500;
+    res.status(500).render("error", { 
+      message: "Lỗi khi tải chi tiết sản phẩm",
+      error: error
+    });
   }
-  
-  // Lấy danh sách sản phẩm yêu thích của user nếu đã đăng nhập
-  let userWishlistIds = [];
-  if (req.session.User) {
-    userWishlistIds = await modelWishlist.getUserWishlistIds(req.session.User.id);
-  }
-  
-  // Giới hạn chỉ hiển thị 8 sản phẩm ngẫu nhiên để tránh slider quá lớn
-  let listPro = listProAll
-    .filter(p => p.idProduct !== newItemPro.idProduct) // Loại bỏ sản phẩm hiện tại
-    .sort(() => 0.5 - Math.random()) // Shuffle ngẫu nhiên
-    .slice(0, 8); // Chỉ lấy 8 sản phẩm
-  
-  res.render("site/chi-tiet-san-pham", {
-    itemPro: newItemPro,
-    listCat: listCat,
-    listPro: listPro,
-    listComment: listComment,
-    breadcrumb,
-    userWishlistIds: userWishlistIds,
-    user: req.session.User,
-    wishlistCount: req.session.wishlistCount || 0,
-    cartCount: req.session.cartCount || 0,
-    canReview: canReview,
-    hasReviewed: hasReviewed,
-    userPurchased: userPurchased
-  });
 });
 
 // API

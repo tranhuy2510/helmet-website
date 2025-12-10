@@ -34,10 +34,6 @@
   </head>
 
   <body>
-    <% if (typeof slug !== 'function') { var slug = function(name){ if(!name)
-    return ''; return
-    String(name).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'d').toLowerCase().replace(/\s+/g,'-');
-    }; } %>
     <!-- Top bar Start -->
     <div class="top-bar">
       <div class="container-fluid">
@@ -78,15 +74,13 @@
               <a href="/cart" class="nav-item nav-link">Giỏ Hàng</a>
               <a href="/thanh-toan" class="nav-item nav-link">Thanh Toán</a>
               <a href="/users/tai-khoan" class="nav-item nav-link"
-                >Tài khoản của bạn</a
-              >
+                >Tài khoản của bạn</a>
               <div class="nav-item dropdown">
                 <a
                   href="#"
                   class="nav-link dropdown-toggle"
                   data-toggle="dropdown"
-                  >Trang khác</a
-                >
+                  >Trang khác</a>
                 <div class="dropdown-menu">
                   <a href="/wishlist" class="dropdown-item"
                     >Sản phẩm đã thích</a

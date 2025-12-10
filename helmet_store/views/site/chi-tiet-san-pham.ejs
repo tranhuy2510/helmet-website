@@ -37,132 +37,9 @@
 
     <!-- Template Stylesheet -->
     <link href="../css/style.css" rel="stylesheet" />
-    
-    <style>
-      .alert {
-        padding: 15px;
-        margin: 20px 0;
-        border: 1px solid transparent;
-        border-radius: 4px;
-      }
-      
-      .alert-warning {
-        color: #856404;
-        background-color: #fff3cd;
-        border-color: #ffeaa7;
-      }
-      
-      .alert-info {
-        color: #0c5460;
-        background-color: #d1ecf1;
-        border-color: #bee5eb;
-      }
-      
-      .alert-success {
-        color: #155724;
-        background-color: #d4edda;
-        border-color: #c3e6cb;
-      }
-      
-      /* Fix slick slider overflow */
-      .product-slider-3,
-      .sidebar-slider {
-        overflow: hidden !important;
-        max-width: 100% !important;
-        margin: 0 -5px;
-      }
-      
-      .product-slider-3 .slick-list,
-      .sidebar-slider .slick-list {
-        overflow: hidden !important;
-        max-width: 100% !important;
-        padding: 0 !important;
-      }
-      
-      .product-slider-3 .slick-track,
-      .sidebar-slider .slick-track {
-        display: flex !important;
-        margin: 0;
-      }
-      
-      .product-slider-3 .slick-slide,
-      .sidebar-slider .slick-slide {
-        float: none !important;
-        margin: 0 5px;
-        padding: 10px 0;
-        box-sizing: border-box;
-      }
-      
-      .product-slider-3 .slick-slide .product-item,
-      .sidebar-slider .slick-slide .product-item {
-        margin: 0;
-        width: 100%;
-      }
-      
-      .product-slider-3 .slick-slide img,
-      .sidebar-slider .slick-slide img {
-        width: 100%;
-        height: auto;
-        display: block;
-      }
-      
-      /* Fix page overflow */
-      html, body {
-        overflow-x: hidden !important;
-        max-width: 100vw !important;
-      }
-      
-      .container-fluid {
-        overflow-x: hidden !important;
-        max-width: 100%;
-      }
-      
-      .product-detail > .container-fluid > .row {
-        display: flex;
-        flex-wrap: wrap;
-        margin-left: -15px;
-        margin-right: -15px;
-      }
-      
-      .product-detail .col-lg-8 {
-        flex: 0 0 66.666667%;
-        max-width: 66.666667%;
-        padding-left: 15px;
-        padding-right: 15px;
-      }
-      
-      .product-detail .col-lg-4 {
-        flex: 0 0 33.333333%;
-        max-width: 33.333333%;
-        padding-left: 15px;
-        padding-right: 15px;
-      }
-      
-      /* Fix product section */
-      .product {
-        width: 100%;
-        overflow: hidden;
-        margin-top: 30px;
-        padding: 0 15px;
-      }
-      
-      /* Fix sidebar width */
-      .sidebar {
-        width: 100%;
-      }
-      
-      .sidebar-widget {
-        max-width: 100%;
-        overflow: hidden;
-      }
-    </style>
   </head>
 
   <body>
-    <% if (typeof slug !== 'function') { var slug = function(name){ if(!name)
-    return ''; return
-    String(name).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'d').toLowerCase().replace(/\s+/g,'-');
-    }; } %>
     <!-- Top bar Start -->
     <div class="top-bar">
       <div class="container-fluid">
@@ -231,8 +108,7 @@
                 >
                 <div class="dropdown-menu">
                   <a href="/users/tai-khoan" class="dropdown-item"
-                    >Tài khoản của tôi</a
-                  >
+                    >Tài khoản của tôi</a>
                   <a href="/orders" class="dropdown-item">Đơn hàng</a>
                   <a href="/users/dang-xuat" class="dropdown-item">Đăng xuất</a>
                 </div>
@@ -243,8 +119,7 @@
                   href="#"
                   class="nav-link dropdown-toggle"
                   data-toggle="dropdown"
-                  >Tài khoản</a
-                >
+                  >Tài khoản</a>
                 <div class="dropdown-menu">
                   <a href="/users/dang-nhap" class="dropdown-item">Đăng nhập</a>
                   <a href="/users/dang-ky" class="dropdown-item">Đăng ký</a>
@@ -436,11 +311,19 @@
                   <div id="specification" class="container tab-pane fade">
                     <h4>Chi tiết sản phẩm</h4>
                     <ul>
-                      <li>Lorem ipsum dolor sit amet</li>
-                      <li>Lorem ipsum dolor sit amet</li>
-                      <li>Lorem ipsum dolor sit amet</li>
-                      <li>Lorem ipsum dolor sit amet</li>
-                      <li>Lorem ipsum dolor sit amet</li>
+                      <% if (itemPro.specification && itemPro.specification.trim()) { %>
+                        <% itemPro.specification.split('\n').forEach(function(line) { %>
+                          <% if (line.trim()) { %>
+                            <li><%= line.trim() %></li>
+                          <% } %>
+                        <% }); %>
+                      <% } else { %>
+                        <li>Chất liệu: Nhựa ABS cao cấp</li>
+                        <li>Trọng lượng: 1.2kg</li>
+                        <li>Kích thước: S, M, L</li>
+                        <li>Tiêu chuẩn an toàn: DOT, ECE</li>
+                        <li>Bảo hành: 12 tháng</li>
+                      <% } %>
                     </ul>
                   </div>
                   <div id="reviews" class="container tab-pane fade">

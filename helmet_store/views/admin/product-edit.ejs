@@ -90,6 +90,19 @@
                     placeholder="Nhập mô tả sản phẩm"
                   ><%= product.desProduct || '' %></textarea>
                 </div>
+                <div class="form-group">
+                  <label for="specification">Chi tiết sản phẩm</label>
+                  <textarea
+                    class="form-control"
+                    rows="6"
+                    id="specification"
+                    name="specification"
+                    placeholder="Nhập chi tiết sản phẩm (mỗi dòng một thông tin)&#10;Ví dụ:&#10;Chất liệu: Nhựa ABS cao cấp&#10;Trọng lượng: 1.2kg&#10;Kích thước: S, M, L&#10;Chuẩn an toàn: DOT, ECE&#10;Bảo hành: 12 tháng"
+                  ><%= product.specification || '' %></textarea>
+                  <small class="form-text text-muted"
+                    >Mỗi dòng sẽ hiển thị như một mục trong danh sách chi tiết.</small
+                  >
+                </div>
                 <% if (product.imgProduct) { %>
                 <div class="form-group">
                   <label>Hình ảnh hiện tại:</label>

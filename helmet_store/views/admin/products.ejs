@@ -136,6 +136,27 @@
 </div>
 
 <script>
+  // Hiển thị thông báo khi có query parameter success (chạy trước khi jQuery load)
+  (function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    
+    if (success === 'add') {
+      alert('✅ Đã thêm sản phẩm mới thành công!');
+      // Xóa parameter khỏi URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (success === 'edit') {
+      alert('✅ Đã cập nhật sản phẩm thành công!');
+      // Xóa parameter khỏi URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (success === 'delete') {
+      alert('✅ Đã xóa sản phẩm thành công!');
+      // Xóa parameter khỏi URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  })();
+
+  // DataTable initialization (chạy sau khi jQuery load)
   $(function () {
     $("#productsTable")
       .DataTable({

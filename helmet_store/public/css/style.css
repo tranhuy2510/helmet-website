@@ -2792,3 +2792,111 @@ h2 {
 .product-action a:hover {
   transform: scale(1.1);
 }
+
+/* Alert styles - safe for all pages */
+.alert {
+  padding: 15px;
+  margin: 20px 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.alert-warning {
+  color: #856404;
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+}
+
+.alert-info {
+  color: #0c5460;
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
+}
+
+.alert-success {
+  color: #155724;
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+}
+
+/* ONLY for product detail page - use specific parent class */
+.product-detail .product-slider-3,
+.product-detail .sidebar-slider {
+  overflow: hidden !important;
+  max-width: 100% !important;
+  margin: 0 -5px;
+}
+
+.product-detail .product-slider-3 .slick-list,
+.product-detail .sidebar-slider .slick-list {
+  overflow: hidden !important;
+  max-width: 100% !important;
+  padding: 0 !important;
+}
+
+.product-detail .product-slider-3 .slick-track,
+.product-detail .sidebar-slider .slick-track {
+  display: flex !important;
+  margin: 0;
+}
+
+.product-detail .product-slider-3 .slick-slide,
+.product-detail .sidebar-slider .slick-slide {
+  float: none !important;
+  margin: 0 5px;
+  padding: 10px 0;
+  box-sizing: border-box;
+}
+
+.product-detail .product-slider-3 .slick-slide .product-item,
+.product-detail .sidebar-slider .slick-slide .product-item {
+  margin: 0;
+  width: 100%;
+}
+
+.product-detail .product-slider-3 .slick-slide img,
+.product-detail .sidebar-slider .slick-slide img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Fix product detail layout only */
+.product-detail > .container-fluid > .row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: -15px;
+  margin-right: -15px;
+}
+
+.product-detail .col-lg-8 {
+  flex: 0 0 66.666667%;
+  max-width: 66.666667%;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+.product-detail .col-lg-4 {
+  flex: 0 0 33.333333%;
+  max-width: 33.333333%;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+/* Fix product section in detail page only */
+.product-detail .product {
+  width: 100%;
+  overflow: hidden;
+  margin-top: 30px;
+  padding: 0 15px;
+}
+
+/* Fix sidebar in detail page only */
+.product-detail .sidebar {
+  width: 100%;
+}
+
+.product-detail .sidebar-widget {
+  max-width: 100%;
+  overflow: hidden;
+}

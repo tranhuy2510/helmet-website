@@ -140,17 +140,17 @@ router.post(
   "/products/add",
   upload.single("imgProduct"),
   function (req, res, next) {
-    let { nameProduct, priceProduct, desProduct, idCat } = req.body;
+    let { nameProduct, priceProduct, desProduct, specification, idCat } = req.body;
     let imgProduct = req.file ? `img/${req.file.filename}` : null;
 
     let sql =
-      "INSERT INTO product (nameProduct, priceProduct, desProduct, idCat, imgProduct) VALUES (?, ?, ?, ?, ?)";
+      "INSERT INTO product (nameProduct, priceProduct, desProduct, specification, idCat, imgProduct) VALUES (?, ?, ?, ?, ?, ?)";
     db.query(
       sql,
-      [nameProduct, priceProduct, desProduct, idCat, imgProduct],
+      [nameProduct, priceProduct, desProduct, specification, idCat, imgProduct],
       (err, result) => {
         if (err) throw err;
-        res.redirect("/admin/products");
+        res.redirect("/admin/products?success=add");
       }
     );
   }
@@ -181,31 +181,31 @@ router.post(
   upload.single("imgProduct"),
   function (req, res, next) {
     let productId = req.params.id;
-    let { nameProduct, priceProduct, desProduct, idCat } = req.body;
+    let { nameProduct, priceProduct, desProduct, specification, idCat } = req.body;
 
     // Nếu có file mới được upload
     if (req.file) {
       let imgProduct = `img/${req.file.filename}`;
       let sql =
-        "UPDATE product SET nameProduct = ?, priceProduct = ?, desProduct = ?, idCat = ?, imgProduct = ? WHERE idProduct = ?";
+        "UPDATE product SET nameProduct = ?, priceProduct = ?, desProduct = ?, specification = ?, idCat = ?, imgProduct = ? WHERE idProduct = ?";
       db.query(
         sql,
-        [nameProduct, priceProduct, desProduct, idCat, imgProduct, productId],
+        [nameProduct, priceProduct, desProduct, specification, idCat, imgProduct, productId],
         (err, result) => {
           if (err) throw err;
-          res.redirect("/admin/products");
+          res.redirect("/admin/products?success=edit");
         }
       );
     } else {
       // Không có file mới, chỉ update các field khác
       let sql =
-        "UPDATE product SET nameProduct = ?, priceProduct = ?, desProduct = ?, idCat = ? WHERE idProduct = ?";
+        "UPDATE product SET nameProduct = ?, priceProduct = ?, desProduct = ?, specification = ?, idCat = ? WHERE idProduct = ?";
       db.query(
         sql,
-        [nameProduct, priceProduct, desProduct, idCat, productId],
+        [nameProduct, priceProduct, desProduct, specification, idCat, productId],
         (err, result) => {
           if (err) throw err;
-          res.redirect("/admin/products");
+          res.redirect("/admin/products?success=edit");
         }
       );
     }
@@ -220,7 +220,7 @@ router.post("/products/delete/:id", function (req, res, next) {
     [productId],
     (err, result) => {
       if (err) throw err;
-      res.redirect("/admin/products");
+      res.redirect("/admin/products?success=delete");
     }
   );
 });
