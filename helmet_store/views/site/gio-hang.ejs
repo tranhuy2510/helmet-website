@@ -437,6 +437,9 @@
           return;
         }
 
+        // Lưu trạng thái checkbox trước khi reload
+        saveCheckboxState();
+
         $.ajax({
           url: "/cart/update",
           method: "POST",
@@ -546,7 +549,53 @@
 
       // Khởi tạo khi trang load
       document.addEventListener("DOMContentLoaded", function () {
+        // Khôi phục trạng thái checkbox từ localStorage
+        restoreCheckboxState();
         updateTotal();
+      });
+
+      // Function để lưu trạng thái checkbox vào localStorage
+      function saveCheckboxState() {
+        const selectedItems = [];
+        const selectAllChecked = document.getElementById("selectAll").checked;
+        
+        document.querySelectorAll(".item-checkbox:checked").forEach((checkbox) => {
+          selectedItems.push(checkbox.dataset.cartId);
+        });
+
+        localStorage.setItem("selectedCartItems", JSON.stringify(selectedItems));
+        localStorage.setItem("selectAllChecked", selectAllChecked);
+      }
+
+      // Function để khôi phục trạng thái checkbox từ localStorage
+      function restoreCheckboxState() {
+        const selectedItems = JSON.parse(localStorage.getItem("selectedCartItems") || "[]");
+        const selectAllChecked = localStorage.getItem("selectAllChecked") === "true";
+
+        if (selectedItems.length > 0) {
+          selectedItems.forEach((cartId) => {
+            const checkbox = document.querySelector(`.item-checkbox[data-cart-id="${cartId}"]`);
+            if (checkbox) {
+              checkbox.checked = true;
+            }
+          });
+
+          // Cập nhật selectAll checkbox
+          const allCheckboxes = document.querySelectorAll(".item-checkbox");
+          const checkedCheckboxes = document.querySelectorAll(".item-checkbox:checked");
+          document.getElementById("selectAll").checked = 
+            allCheckboxes.length > 0 && allCheckboxes.length === checkedCheckboxes.length;
+        } else if (selectAllChecked) {
+          document.getElementById("selectAll").checked = true;
+          selectAllItems();
+        }
+      }
+
+      // Lưu trạng thái khi người dùng thay đổi checkbox
+      document.addEventListener("change", function(e) {
+        if (e.target.classList.contains("item-checkbox") || e.target.id === "selectAll") {
+          saveCheckboxState();
+        }
       });
     </script>
   </body>
